@@ -50,7 +50,7 @@ bot_center = [9.5,42];  % Robot starting location
 %bot_center = [rand_x,rand_y]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-bot_rot = 45;            % Robot starting rotation
+bot_rot = 0;            % Robot starting rotation
 block_center = [25,41]; % Block starting location
 blocksize = 3;          % Block side length in inches
 num_segments = 10;      % Number of movement segments

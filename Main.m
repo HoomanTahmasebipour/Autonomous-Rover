@@ -24,6 +24,7 @@ global ir_circle
 %% User-editable variables and flags
 % Constants
 bot_center = [9.5,42];  % Robot starting location
+
 bot_rot = 0;            % Robot starting rotation
 block_center = [25,41]; % Block starting location
 blocksize = 3;          % Block side length in inches
@@ -115,13 +116,13 @@ if plot_robot
 end
 
 %% Initialize tcp server to read and respond to algorithm commands
-clc  % Clear loading message
+%clc  % Clear loading message
 disp('Simulator initialized... waiting for connection from client')
 [s_cmd, s_rply] = tcp_setup('server', 9000, 9001);
 fopen(s_cmd);
 %fopen(s_rply);
 
-clc
+%clc
 disp('Client connected!')
 
 %% Simulator Main Loop
