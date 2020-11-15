@@ -1,0 +1,19 @@
+    if u(1)_n+1 - u(1)_n < drive_margin_err & u(1)_n+2 - u(1)_n+1 < drive_margin_err
+       cmdstring = [strcat('r1-',num2str(90)) newline];
+       reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+    elseif u(2)_n+1 - u(2)_n < drive_margin_err & u(2)_n+2 - u(2)_n+1 < drive_margin_err
+       cmdstring = [strcat('r1-',num2str(90)) newline];
+       reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+    elseif u(3)_n+1 - u(3)_n < drive_margin_err & u(3)_n+2 - u(3)_n+1 < drive_margin_err
+       cmdstring = [strcat('r1-',num2str(90)) newline];
+       reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+    elseif u(4)_n+1 - u(4)_n < drive_margin_err & u(4)_n+2 - u(4)_n+1 < drive_margin_err
+       cmdstring = [strcat('r1-',num2str(90)) newline];
+       reply = tcpclient_write(cmdstring, s_cmd, s_rply);   
+    elseif u(5)_n+1 - u(5)_n < drive_margin_err & u(5)_n+2 - u(5)_n+1 < drive_margin_err
+       cmdstring = [strcat('r1-',num2str(90)) newline];
+       reply = tcpclient_write(cmdstring, s_cmd, s_rply);          
+    elseif u(6)_n+1 - u(6)_n < drive_margin_err & u(6)_n+2 - u(6)_n+1 < drive_margin_err
+       cmdstring = [strcat('r1-',num2str(90)) newline];
+       reply = tcpclient_write(cmdstring, s_cmd, s_rply);          
+    
