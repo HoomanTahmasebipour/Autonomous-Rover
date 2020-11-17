@@ -23,7 +23,7 @@ global ir_circle
 
 %% User-editable variables and flags
 % Constants
-bot_center = [30,42];  % Robot starting location
+bot_center = [9.5,42];  % Robot starting location
 
 %%%%%% CODE ADDED BY HOOMAN %%%%%%%%%%%%
 % setting bot center to be a random location
@@ -58,7 +58,7 @@ strength = [0.05, 1];	% How intense the random drive bias is, if enabled
 step_time = 0;          % Pause time between the algorithm executing commands
 
 % Control Flags and Setup
-randerror = 0;          % Use either a random error generator (1) or consistent error generation (0)
+randerror = 1;          % Use either a random error generator (1) or consistent error generation (0)
 randbias = 1;           % Use a randomized, normally distributed set of drive biases
 sim = 1;                % Use the simulator (1) or connect to robot via blueteooth (0)
 plot_robot = 1;         % Plot the robot as it works its way through the maze
