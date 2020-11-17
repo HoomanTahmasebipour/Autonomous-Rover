@@ -23,7 +23,7 @@ global ir_circle
 
 %% User-editable variables and flags
 % Constants
-bot_center = [42,30];  % Robot starting location
+bot_center = [66,6];  % Robot starting location
 
 %%%%%% CODE ADDED BY HOOMAN %%%%%%%%%%%%
 % setting bot center to be a random location
@@ -50,7 +50,7 @@ bot_center = [42,30];  % Robot starting location
 %bot_center = [rand_x,rand_y]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-bot_rot = 33;            % Robot starting rotation
+bot_rot = 0;            % Robot starting rotation
 block_center = [0,0]; % Block starting location
 blocksize = 3;          % Block side length in inches
 num_segments = 10;      % Number of movement segments
