@@ -21,7 +21,7 @@ pos = [0,0,0];  % Position (x,y,rotation)
 rot_stuck = 90;
 stepcount = 0;
 
-rover_radius = 5.16;
+rover_radius = 4.915;
 ultrasonic_margin = (6 - rover_radius) / 6;
 drive_margin = 0;
 cmdstring_history = ["a","b","c"];
@@ -38,14 +38,14 @@ rover_unique_loc = 0;
 while 1    
     % Rotate rover until sensor measurements from u4/u5 AND u1/u6 are
     % within an acceptable range
-    oscilating = 0;
     u = take_ultrasonic_measurements(s_cmd, s_rply);
-    disp('Ultrasonic; Before move, before straighten, after move')
+    disp('Ultrasonic; Before straighten, before center, after move')
     disp(u)
     [rover_straight, cmdstring_history] = straighten_rover(u, u_loc, s_cmd, s_rply, drive_margin, cmdstring_history, cmdstring_history_idx, rover_radius);
     if (mod(cmdstring_history_idx,3) == 0)
         cmdstring_history_idx = 1;
         if (cmdstring_history(1) == cmdstring_history(3))
+            disp('oscilating')
             cmdstring = [strcat('d1-',num2str(1)) newline];
             reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         end
@@ -69,7 +69,6 @@ while 1
     end
     % If the rover has been stuck in the same position for three commands, try to get out
 end
-
 %% Helper functions
 function [u] = take_ultrasonic_measurements(s_cmd, s_rply)
     % This function takes ultrasonic readings as many as num_measurements,
@@ -100,7 +99,7 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
     upper_thresh_straight = 5;
     cmd_history = cmdstring_history;
     u4_u5_diff = abs(u4 - u5);
-    u1_u6_diff = abs(u1 - u6);
+    u1_u6_diff = 0;%abs(u1 - u6);
     min_rot = 1;
     min_rot_thresh = (upper_thresh_straight - lower_thresh_straight)*0.15 + lower_thresh_straight;
     med_rot = 5;
@@ -187,12 +186,30 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
         centered_dist_from_wall_min = 17.5;%centered_dist_from_wall - centered_dist_from_wall * ultrasonic_margin;
         centered_dist_from_wall_max = 18.5;%centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
     end
-    speed = 0.2;
+        
+    micro_speed = 0.2;
+    micro_speed_dist_thresh = 3;
+    min_speed = 5;
+    min_speed_dist_thresh = 4;
+    med_speed = 1;
+    max_speed_dist_thresh = 7;
+    max_speed = 2;
     
     if (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max)))
         rover_centered = 1;
     elseif (unique_loc == 0 && (u_left < centered_dist_from_wall_min || (u_right < u_left && u_right > centered_dist_from_wall_max)))
         % Either left side is too close or right side is too far, move right
+        
+        if (u_right < micro_speed_dist_thresh)
+            speed = micro_speed;
+        elseif (u_right > micro_speed_dist_thresh && u_right <= min_speed_dist_thresh)
+            speed = min_speed;
+        elseif (u_right > min_speed_dist_thresh && u_right <= max_speed_dist_thresh)
+            speed = med_speed;
+        elseif (u_right > max_speed_dist_thresh)
+            speed = max_speed;
+        end
+        
         cmdstring = [strcat('r1-',num2str(-90)) newline];
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -203,6 +220,17 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
         rover_centered = 0;
     elseif (unique_loc == 0 && (u_right < centered_dist_from_wall_min || (u_left < u_right && u_left > centered_dist_from_wall_max)))
         % Eithert right side is too close or left side is too far, move left
+        
+        if (u_left < micro_speed_dist_thresh)
+            speed = micro_speed;
+        elseif (u_left > micro_speed_dist_thresh && u_left <= min_speed_dist_thresh)
+            speed = min_speed;
+        elseif (u_left > min_speed_dist_thresh && u_left <= max_speed_dist_thresh)
+            speed = med_speed;
+        elseif (u_left > max_speed_dist_thresh)
+            speed = max_speed;
+        end
+        
         cmdstring = [strcat('r1-',num2str(90)) newline];
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -232,15 +260,17 @@ function move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
     u45 = abs(u4 + u5)/2;
     u16 = abs(u1 + u6)/2;
     
-    micro_speed = 1;
+    micro_speed = 0.5;
     micro_speed_dist_thresh = 3;
     min_speed = 1;
     min_speed_dist_thresh = 4;
     med_speed = 2;
-    max_speed_dist_thresh = 5;
+    max_speed_dist_thresh = 7;
     max_speed = 3;
+    super_speed_dist_thresh = 10;
+    super_speed = 4;
     
-    if (u2 > u45 && u2 > centered_dist_from_wall_max && u16 <= centered_dist_from_wall_max)
+    if (u2 > u45 && u2 > centered_dist_from_wall_max && u16 <= centered_dist_from_wall_max*1.5)
         % Move left, first determine rover speed
         if (u2 < micro_speed_dist_thresh)
             speed = micro_speed;
@@ -248,8 +278,10 @@ function move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
             speed = min_speed;
         elseif (u2 > min_speed_dist_thresh && u2 <= max_speed_dist_thresh)
             speed = med_speed;
-        elseif (u2 > max_speed_dist_thresh)
+        elseif (u2 > max_speed_dist_thresh && u2 <= super_speed_dist_thresh)
             speed = max_speed;
+        elseif (u2 > super_speed_dist_thresh)
+            speed = super_speed;
         end
         % Rotate rover 90 CW and move forward one step
         cmdstring = [strcat('r1-',num2str(90)) newline];
@@ -258,16 +290,16 @@ function move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         disp('Move left')
         disp(cmdstring)
-    elseif (u45 >= u2 && u45 >= centered_dist_from_wall_max && u16 <= centered_dist_from_wall_max)
+    elseif (u45 >= u2 && u45 >= centered_dist_from_wall_max && u16 <= centered_dist_from_wall_max*1.5)
         % Move right, first determine rover speed
         if (u45 < micro_speed_dist_thresh)
             speed = micro_speed;
         elseif (u45 > micro_speed_dist_thresh && u45 <= min_speed_dist_thresh)
             speed = min_speed;
-        elseif (u45 > min_speed_dist_thresh && u45 <= max_speed_dist_thresh)
-            speed = med_speed;
-        elseif (u45 > max_speed_dist_thresh)
+        elseif (u45 > min_speed_dist_thresh && u45 <= super_speed_dist_thresh)
             speed = max_speed;
+        elseif (u45 > super_speed_dist_thresh)
+            speed = super_speed;
         end
         % Rotate rover 90 CCW and move forward one step
         cmdstring = [strcat('r1-',num2str(-90)) newline];
@@ -276,7 +308,7 @@ function move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         disp('Move right')
         disp(cmdstring)
-    elseif (u16 > centered_dist_from_wall_max)
+    elseif (u16 > centered_dist_from_wall_max*1.5)
         % Move forward, first determine rover speed
         if (u16 < micro_speed_dist_thresh)
             speed = micro_speed;
@@ -284,8 +316,10 @@ function move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
             speed = min_speed;
         elseif (u16 > min_speed_dist_thresh && u16 <= max_speed_dist_thresh)
             speed = med_speed;
-        elseif (u16 > max_speed_dist_thresh)
+        elseif (u16 > max_speed_dist_thresh && u16 <= super_speed_dist_thresh)
             speed = max_speed;
+        elseif (u16 > super_speed_dist_thresh)
+            speed = super_speed;
         end
         % Move rover forward one step
         cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -300,8 +334,10 @@ function move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
             speed = min_speed;
         elseif (u3 > min_speed_dist_thresh && u3 <= max_speed_dist_thresh)
             speed = med_speed;
-        elseif (u3 > max_speed_dist_thresh)
+        elseif (u3 > max_speed_dist_thresh && u3 <= super_speed_dist_thresh)
             speed = max_speed;
+        elseif (u3 > super_speed_dist_thresh)
+            speed = super_speed;
         end
         % Rotate rover 180 CW and move forward one step
         cmdstring = [strcat('r1-',num2str(90)) newline];
