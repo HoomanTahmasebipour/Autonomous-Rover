@@ -39,6 +39,22 @@ rover_radius = 5.16;
 log = 1;
 stuck_cond = 0.05;
 u_mat = zeros(3,6);
+
+%while u_in(1) < u1_max_dist + 12
+%    u = [0,0,0,0,0,0];
+%    for i = 1:averaging_iters
+%        for ct = 1:6
+%            cmdstring = [strcat('u',num2str(ct)) newline];
+%            u(ct) = u(ct) + tcpclient_write(cmdstring, s_cmd, s_rply);
+%        end
+%    end
+%    % average out the sensor values
+%    u = u / averaging_iters;
+%    
+%    cmdstring = [strcat('r1-',num2str(10)) newline];
+%    reply = tcpclient_write(cmdstring, s_cmd, s_rply); 
+%end
+
 while 1
     
     % Take Measurements
@@ -136,18 +152,6 @@ while 1
     elseif (u45 <  u45_max_dist - u45_max_dist * ultrasonic_margin)
         right_too_close = 1;
         disp('right_too_close')
-    %elseif (u2_u45_diff >= 0.3 && u2_u45_diff <= 5)
-    %    % Walls on either side of the rover
-    %    rover_centered = 0;
-    %    if (u(2) < u2_max_dist - u2_max_dist * ultrasonic_margin)
-    %        % left side of rover too close to the maze wall
-    %        left_too_close = 1;
-    %        disp('left_too_close')
-    %    elseif (u45 < u45_max_dist - u45_max_dist * ultrasonic_margin)
-    %        % right side of rover too close to the maze wall
-    %        right_too_close = 1;
-    %        disp('right_too_close')
-    %    end
     else
         if (u(2) < u45 && u(2) > u2_max_dist + u2_max_dist * ultrasonic_margin)
             left_too_far = 1;
