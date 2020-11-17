@@ -157,6 +157,7 @@ while 1
             disp('right_too_far')
         end
     end
+   
     
     if (rover_centered == 1 && (u4_u5_diff < lower_thresh_unstable_drive || u4_u5_diff > upper_thresh_unstable_drive))
         %Drive in open direction
