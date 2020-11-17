@@ -23,43 +23,18 @@ global ir_circle
 
 %% User-editable variables and flags
 % Constants
-bot_center = [9.5,42];  % Robot starting location
-
-%%%%%% CODE ADDED BY HOOMAN %%%%%%%%%%%%
-% setting bot center to be a random location
-%y_min = 6;
-%y_max = 42;
-%x_min = 6;
-%x_max = 90;
-%valid_center = 0;
-%blocked_bb_1 = [5.5,5.5;29.5,29.5];
-%blocked_bb_2 = [17.5,17.5;41.5,41.5];
-%blocked_bb_3 = [29.5,5.5;65.5,29.5];
-%blocked_bb_4 = [41.5,29.5;65.5,48];
-%blocked_bb_5 = [65.5,29.5;89.5,48];
-%blocked_bb_6 = [65.5,0;89.5,29.5];
-
-%while (valid_center == 0)
-%    rand_x = (x_max - x_min).*rand(1,1) + x_min;
-%    rand_y = (y_max - y_min).*rand(1,1) + y_min;
-%    if (~(rand_x > blocked_bb_1(1,1) && rand_x < blocked_bb_1(2,1) && rand_y > blocked_bb_1(1,2) && rand_y < blocked_bb_1(2,2)) && ~(rand_x > blocked_bb_2(1,1) && rand_x < blocked_bb_2(2,1) && rand_y > blocked_bb_2(1,2) && rand_y < blocked_bb_2(2,2)) && ~(rand_x > blocked_bb_3(1,1) && rand_x < blocked_bb_3(2,1) && rand_y > blocked_bb_3(1,2) && rand_y < blocked_bb_3(2,2)) && ~(rand_x > blocked_bb_4(1,1) && rand_x < blocked_bb_4(2,1) && rand_y > blocked_bb_4(1,2) && rand_y < blocked_bb_4(2,2)) && ~(rand_x > blocked_bb_5(1,1) && rand_x < blocked_bb_5(2,1) && rand_y > blocked_bb_5(1,2) && rand_y < blocked_bb_5(2,2)) && ~(rand_x > blocked_bb_6(1,1) && rand_x < blocked_bb_6(2,1) && rand_y > blocked_bb_6(1,2) && rand_y < blocked_bb_6(2,2)))
-%        valid_center = 1;
-%    end
-%    disp(valid_center)
-%end
-%bot_center = [rand_x,rand_y]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+bot_center = [6,42];  % Robot starting location
 
 bot_rot = 0;            % Robot starting rotation
 block_center = [25,41]; % Block starting location
-blocksize = 3;          % Block side length in inches
+blocksize = 0;          % Block side length in inches
 num_segments = 10;      % Number of movement segments
-strength = [0.05, 1];	% How intense the random drive bias is, if enabled
+strength = [0, 0];	% How intense the random drive bias is, if enabled
 step_time = 0;          % Pause time between the algorithm executing commands
 
 % Control Flags and Setup
-randerror = 1;          % Use either a random error generator (1) or consistent error generation (0)
-randbias = 1;           % Use a randomized, normally distributed set of drive biases
+randerror = 0;          % Use either a random error generator (1) or consistent error generation (0)
+randbias = 0;           % Use a randomized, normally distributed set of drive biases
 sim = 1;                % Use the simulator (1) or connect to robot via blueteooth (0)
 plot_robot = 1;         % Plot the robot as it works its way through the maze
 plot_sense = 1;         % Plot sensor interactions with maze, if relevant
