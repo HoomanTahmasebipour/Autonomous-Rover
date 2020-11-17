@@ -34,6 +34,22 @@ lower_thresh_unstable_drive = 0.2;
 upper_thresh_unstable_drive = 5;
 averaging_iters = 1;
 rover_radius = 5.16;
+
+% Realign rover if placed in maze on an angle
+u_in = [0,0,0,0,0,0];  % Initial ultrasonic measurements
+
+while u_in(1) < u1_max_dist + 12
+    for ct = 1:6
+        cmdstring = [strcat('u',num2str(ct)) newline];
+        u_in(ct) = tcpclient_write(cmdstring, s_cmd, s_rply);
+    end
+    
+    %Rotate rover CW until driving straight
+    cmdstring = [strcat('r1-',num2str(10)) newline];
+    reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+  
+end
+
 while 1
     
     % Take Measurements
@@ -106,6 +122,7 @@ while 1
             disp('rover_centered')
         end
     end
+   
     
     if ((u4_u5_diff < lower_thresh_unstable_drive || u4_u5_diff > upper_thresh_unstable_drive) && rover_centered == 1)
         %Drive in open direction
