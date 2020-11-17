@@ -230,44 +230,7 @@ while 1
             cmdstring = [strcat('d1-',num2str(speed)) newline];
             reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         end
-    elseif ((u4_u5_diff >= lower_thresh_unstable_drive && u4_u5_diff <= upper_thresh_unstable_drive))
-        if (u(4) > (u(5) + u(5) * drive_margin))
-            %Rotate rover CW until driving straight
-            disp('r-1')
-            cmdstring = [strcat('r1-',num2str(5)) newline];
-            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        elseif (u(4) < (u(5) - u(5) * drive_margin))
-            %Rotate rover CCW until driving straight
-            disp('r--1')
-            cmdstring = [strcat('r1-',num2str(-5)) newline];
-            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        end
-    elseif (rover_centered == 0 && (left_too_close == 1 || right_too_far))
-        % Rotate rover -90 degrees
-        cmdstring = [strcat('r1-',num2str(-90)) newline];
-        disp('r-90')
-        reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        % Drive to center position
-        speed = speed / 5;
-        cmdstring = [strcat('d1-',num2str(speed)) newline];
-        reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        % Rotate back to starting orientation
-        disp('r--90')
-        cmdstring = [strcat('r1-',num2str(90)) newline];
-        reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-    elseif (rover_centered == 0 && (right_too_close == 1 || left_too_far))
-        % Rotate rover 90 degrees
-        cmdstring = [strcat('r1-',num2str(90)) newline];
-        disp('r-90')
-        reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        % Drive to center position
-        speed = speed / 5;
-        cmdstring = [strcat('d1-',num2str(speed)) newline];
-        reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        % Rotate back to starting orientation
-        disp('r--90')
-        cmdstring = [strcat('r1-',num2str(-90)) newline];
-        reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+    
     end
 
     stepcount = stepcount+1;
