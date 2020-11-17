@@ -24,7 +24,7 @@ if ~exist('plotmap','var')
 end
 
 % Import the sensor data
-sensor_raw = readtable(strcat('config\',fname), 'Range', 'A2');
+sensor_raw = readtable(strcat('config/',fname), 'Range', 'A2');
 sensor_mask = sensor_raw{:,3};
 
 % Remove the sensors that aren't enabled in the config file

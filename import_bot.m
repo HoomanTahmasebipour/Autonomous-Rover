@@ -16,7 +16,7 @@ if ~exist('plotmap','var')
 end
 
 % import robot size definition
-bot_params = csvread(strcat('config\',fname),0,1);
+bot_params = csvread(strcat('config/',fname),0,1);
 
 % Verify that the robot is smaller than 1 foot by 1 foot
 if (bot_params(2) > 12 || bot_params(3) > 12)
