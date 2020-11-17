@@ -13,7 +13,7 @@ if ~exist('fname','var')
 end
 
 % Import the sensor data
-drive_raw = readtable(strcat('config\',fname), 'Range', 'A2');
+drive_raw = readtable(strcat('config/',fname), 'Range', 'A2');
 drive_mask = drive_raw{:,3};
 
 % Remove the sensors that aren't enabled in the config file

@@ -17,7 +17,7 @@ if ~exist('plotmap','var')
 end
 
 % import maze wall coordinates
-maze = csvread(strcat('config\',fname));
+maze = csvread(strcat('config/',fname));
 
 % pre-allocate maze variable by defining outer edges, in feet
 dim1 = 8; dim2 = 4;
