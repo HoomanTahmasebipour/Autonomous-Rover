@@ -29,12 +29,12 @@ bot_rot = 0;            % Robot starting rotation
 block_center = [25,41]; % Block starting location
 blocksize = 0;          % Block side length in inches
 num_segments = 10;      % Number of movement segments
-strength = [0.05, 1];	% How intense the random drive bias is, if enabled
+strength = [0, 0];	% How intense the random drive bias is, if enabled
 step_time = 0;          % Pause time between the algorithm executing commands
 
 % Control Flags and Setup
-randerror = 1;          % Use either a random error generator (1) or consistent error generation (0)
-randbias = 1;           % Use a randomized, normally distributed set of drive biases
+randerror = 0;          % Use either a random error generator (1) or consistent error generation (0)
+randbias = 0;           % Use a randomized, normally distributed set of drive biases
 sim = 1;                % Use the simulator (1) or connect to robot via blueteooth (0)
 plot_robot = 1;         % Plot the robot as it works its way through the maze
 plot_sense = 1;         % Plot sensor interactions with maze, if relevant
