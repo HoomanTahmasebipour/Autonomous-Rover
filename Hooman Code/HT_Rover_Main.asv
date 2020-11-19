@@ -91,20 +91,22 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
     % This function ensures that after each step of the rover, it is
     % continuing to move straight
     u1_ = u(1) - (rover_radius - abs(u_loc(1,1)));
+    u2_ = u(2) - (rover_radius - abs(u_loc(2,2)));
     u4_ = u(4) - (rover_radius - abs(u_loc(4,2)));
     u5_ = u(5) - (rover_radius - abs(u_loc(5,2)));
     u6_ = u(6) - (rover_radius - abs(u_loc(6,1)));
-    disp('u1,u6,u4,u5')
-    disp([u1_,u6_,u4_,u5_])
-    lower_thresh_straight = 0.35;
+    disp('u1,u6,u4,u5,u2')
+    disp([u1_,u6_,u4_,u5_, u2_])
+    lower_thresh_straight = 1.5;
     upper_thresh_straight = 5;
     cmd_history = cmdstring_history;
-    %u4_u5_diff = abs(u4_ - u5_);
-    %if (u4_ < u5_)
-    %    u45_ = u4_;
-    %elseif (u5_ < u4_)
+    u4_u5_diff = abs(u4_ - u5_);
+    if (u4_ < u5_)
+        u45_ = u4_;
+    elseif (u5_ < u4_)
         u45_ = u5_;
-    u2_u45_diff = abs(u2_ - u45_);
+    end
+    u2_u45_diff = abs(u2_ - u45_)
     %u1_u6_diff = 0;%abs(u1 - u6);
     min_rot = 1;
     min_rot_thresh = (upper_thresh_straight - lower_thresh_straight)*0.15 + lower_thresh_straight;
@@ -114,7 +116,7 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
     
     %rot = min_rot;
     
-    if (u2_u45_diff > lower_thresh_straight && u2_u45_diff < upper_thresh_straight)
+    if (u2_u45_diff > lower_thresh_straight && u2_u45_diff < upper_thresh_straight && (u4_u5_diff > lower_thresh_straight && u4_u5_diff < upper_thresh_straight))
         % Determine number of degrees to turn rover
         if (u2_u45_diff > max_rot_thresh)
             rot = max_rot;
@@ -134,7 +136,7 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
         disp('Straighten rover')
     end
     
-    if ((u2_u45_diff < lower_thresh_straight || u2_u45_diff > upper_thresh_straight))
+    if ((u2_u45_diff < lower_thresh_straight || u2_u45_diff > upper_thresh_straight) && (u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight))
         rover_straight = 1;
     else
         rover_straight = 0;
@@ -186,7 +188,7 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
 %        end
 %        disp(cmdstring)
 %        cmd_history(cmd_history_idx) = cmd;
-    end
+    %end
     
     %if ((u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight) && (u1_u6_diff < lower_thresh_straight || u1_u6_diff > upper_thresh_straight))
     %    rover_straight = 1;
@@ -215,14 +217,14 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
     centered_dist_from_wall_min = centered_dist_from_wall - centered_dist_from_wall * ultrasonic_margin;
     centered_dist_from_wall_max = centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
     unique_loc = 0;
-    if (u_left > 10 && u_right > 10)
-        unique_loc = 1;
+    if (u_left > 10 && u_right > 10 && u1 > 10 && u3 > 10)
+        unique_loc = 1
         centered_dist_from_wall_min = 17.5;%centered_dist_from_wall - centered_dist_from_wall * ultrasonic_margin;
         centered_dist_from_wall_max = 18.5;%centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
     end
         
     if (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max)))
-        rover_centered = 1;
+        rover_centered = 1
     elseif (unique_loc == 0 && (u_left < centered_dist_from_wall_min || (u_right < u_left && u_right > centered_dist_from_wall_max)))
         % Either left side is too close or right side is too far, move right
         if (u1 > u1_max_dist)
