@@ -39,36 +39,17 @@ while 1
     % Rotate rover until sensor measurements from u4/u5 AND u1/u6 are
     % within an acceptable range
     u = take_ultrasonic_measurements(s_cmd, s_rply);
-    disp('Ultrasonic; Before straighten, before center, after move')
+    disp('Ultrasonic; Before center, before straighten, after move')
     disp(u)
-    [rover_straight, cmdstring_history] = straighten_rover(u, u_loc, s_cmd, s_rply, drive_margin, cmdstring_history, cmdstring_history_idx, rover_radius);
-    if (rover_straight == 1) 
-        % Make sure the rover is centered in a tile, wihtin an acceptable
-        % margin
-        u = take_ultrasonic_measurements(s_cmd, s_rply);
-        disp('Ultrasonic; After straighten, before center, before move')
-        disp(u)
-        rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius);
-    end
-    if (rover_straight == 1 && rover_centered == 1)
+    rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius);
+
+    if (rover_centered == 1)
         % Move the rover one step in the optimal direction
         u = take_ultrasonic_measurements(s_cmd, s_rply);
         disp('Ultrasonic; After straighten, after center, before move')
         disp(u)
         move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
     end
-    % Handle the case that the rover is oscilating between commands
-    if (mod(cmdstring_history_idx,3) == 0)
-        cmdstring_history_idx = 1;
-        if (cmdstring_history(1) == cmdstring_history(3))
-            disp('oscilating')
-            cmdstring = [strcat('d1-',num2str(1)) newline];
-            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        end
-    else
-        cmdstring_history_idx = cmdstring_history_idx + 1;
-    end
-    % Specific logic for when the rover is in the 
 end
 %% Helper functions
 function [u] = take_ultrasonic_measurements(s_cmd, s_rply)
@@ -87,7 +68,7 @@ function [u] = take_ultrasonic_measurements(s_cmd, s_rply)
     u = u / num_measurements;
 end
 
-function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rply, drive_margin, cmdstring_history, cmd_history_idx, rover_radius)
+function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, cmdstring_history, cmd_history_idx, rover_radius)
     % This function ensures that after each step of the rover, it is
     % continuing to move straight
     u1_ = u(1) - (rover_radius - abs(u_loc(1,1)));
@@ -97,7 +78,10 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
     u6_ = u(6) - (rover_radius - abs(u_loc(6,1)));
     disp('u1,u6,u4,u5,u2')
     disp([u1_,u6_,u4_,u5_, u2_])
-    lower_thresh_straight = 1.5;
+    leftright_thresh_straight = 2.17;
+    leftright_thresh_straight_min = leftright_thresh_straight - leftright_thresh_straight * ultrasonic_margin;
+    leftright_thresh_straight_max = leftright_thresh_straight + leftright_thresh_straight * ultrasonic_margin;
+    lower_thresh_straight = 0.35;
     upper_thresh_straight = 5;
     cmd_history = cmdstring_history;
     u4_u5_diff = abs(u4_ - u5_);
@@ -116,7 +100,7 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
     
     %rot = min_rot;
     
-    if (u2_u45_diff > lower_thresh_straight && u2_u45_diff < upper_thresh_straight && (u4_u5_diff > lower_thresh_straight && u4_u5_diff < upper_thresh_straight))
+    if ((u2_u45_diff < leftright_thresh_straight_min) || (u2_u45_diff > leftright_thresh_straight_max))
         % Determine number of degrees to turn rover
         if (u2_u45_diff > max_rot_thresh)
             rot = max_rot;
@@ -126,75 +110,25 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
             rot = min_rot;
         end
         % Determine if to turn rover CW or CCW
-        if (u4_ > (u5_ + u5_ * drive_margin))
+        if (u4_ > (u5_))
             cmd = [strcat('r1--',num2str(rot)) newline];
             reply_ = tcpclient_write(cmd, s_cmd, s_rply);
-        elseif (u4_ <= (u5_ - u5_ * drive_margin))
+        elseif (u4_ <= (u5_))
             cmd = [strcat('r1-',num2str(rot)) newline];
             reply_ = tcpclient_write(cmd, s_cmd, s_rply);
         end
         disp('Straighten rover')
     end
     
-    if ((u2_u45_diff < lower_thresh_straight || u2_u45_diff > upper_thresh_straight) && (u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight))
+    if ((u2_u45_diff < leftright_thresh_straight || u2_u45_diff > upper_thresh_straight) && (u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight))
         rover_straight = 1;
+        disp('rover_straight')
+        disp(rover_straight)
     else
         rover_straight = 0;
+        disp('rover_straight')
+        disp(rover_straight)
     end
-    
-%    if (0 && ((u4_u5_diff > lower_thresh_straight && u4_u5_diff < upper_thresh_straight) || (u1_u6_diff > lower_thresh_straight && u1_u6_diff < upper_thresh_straight)))
-%        if (u4_u5_diff > u1_u6_diff)
-%            % Determine number of degrees to turn rover
-%            if (u4_u5_diff > max_rot_thresh)
-%                rot = max_rot;
-%            elseif (u4_u5_diff <= max_rot_thresh && u4_u5_diff > min_rot_thresh)
-%                rot = med_rot;
-%            elseif (u4_u5_diff <= min_rot_thresh)
-%                rot = min_rot;
-%            end
-%            % Determine if to turn rover CW or CCW
-%            if (u4 > (u5 + u5 * drive_margin))
-%                cmd = strcat('r1--',num2str(rot));
-%                cmdstring = [cmd newline];
-%                reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-%            elseif (u4 <= (u5 - u5 * drive_margin))
-%                cmd = strcat('r1-',num2str(rot));
-%                cmdstring = [cmd newline];
-%                reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-%            end
-%            disp('Straighten rover based on u4/u5')
-%        elseif (u1_u6_diff >= u4_u5_diff)
-%            % Determine number of degrees to turn rover
-%            if (u1_u6_diff > max_rot_thresh)
-%                rot = max_rot;
-%            elseif (u1_u6_diff <= max_rot_thresh && u4_u5_diff > min_rot_thresh)
-%                rot = med_rot;
-%            elseif (u1_u6_diff <= min_rot_thresh)
-%                rot = min_rot;
-%            end
-%            % Determine if to turn rover CW or CCW
-%            disp('rot')
-%            disp(rot)
-%            if (u1 > (u6 + u6 * drive_margin))
-%                cmd = strcat('r1--',num2str(rot));
-%                cmdstring = [cmd newline];
-%                reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-%            elseif (u1 <= (u6 - u6 * drive_margin))
-%                cmd = strcat('r1-',num2str(rot));
-%                cmdstring = [cmd newline];
-%                reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-%            end
-%            disp('Straighten rover based on u1/u6')
-%        end
-%        disp(cmdstring)
-%        cmd_history(cmd_history_idx) = cmd;
-    %end
-    
-    %if ((u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight) && (u1_u6_diff < lower_thresh_straight || u1_u6_diff > upper_thresh_straight))
-    %    rover_straight = 1;
-    %else
-    %    rover_straight = 0;
-    %end
 end
 
 function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
@@ -219,17 +153,19 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
     centered_dist_from_wall_max = centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
     unique_loc = 0;
     if (u_left > 10 && u_right > 10 && u1 > 10 && u3 > 10)
-        unique_loc = 1
-        centered_dist_from_wall_min = 17.5;%centered_dist_from_wall - centered_dist_from_wall * ultrasonic_margin;
-        centered_dist_from_wall_max = 18.5;%centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
+        unique_loc = 1;
+        disp('unique_loc')
+        disp(unique_loc)
     end
         
     if (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max)))
-        rover_centered = 1
+        rover_centered = 1;
+        disp('rover_centered')
+        disp(rover_centered)
     elseif (unique_loc == 0 && (u_left < centered_dist_from_wall_min || (u_right < u_left && u_right > centered_dist_from_wall_max)))
         % Either left side is too close or right side is too far, move right
         if (u1 > u1_max_dist)
-            speed = u1 / 3;        
+            speed = u_right / 2;        
             cmdstring = [strcat('r1-',num2str(-22)) newline];
             reply = tcpclient_write(cmdstring, s_cmd, s_rply);
             cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -240,11 +176,13 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
             rover_centered = 0;
         else
             rover_centered = 1;
+            disp('rover_centered')
+            disp(rover_centered)
         end
     elseif (unique_loc == 0 && (u_right < centered_dist_from_wall_min || (u_left < u_right && u_left > centered_dist_from_wall_max)))
         % Eithert right side is too close or left side is too far, move left
         if (u1 > u1_max_dist)
-            speed = u1 / 3;        
+            speed = u_left / 2;        
             cmdstring = [strcat('r1-',num2str(22)) newline];
             reply = tcpclient_write(cmdstring, s_cmd, s_rply);
             cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -255,9 +193,13 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
             rover_centered = 0;
         else
             rover_centered = 1;
+            disp('rover_centered')
+            disp(rover_centered)
         end
     elseif (unique_loc == 1)
         rover_centered = 1;
+        disp('rover_centered')
+        disp(rover_centered)
     end
 end
 

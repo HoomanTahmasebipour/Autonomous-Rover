@@ -39,18 +39,18 @@ while 1
     % Rotate rover until sensor measurements from u4/u5 AND u1/u6 are
     % within an acceptable range
     u = take_ultrasonic_measurements(s_cmd, s_rply);
-    disp('Ultrasonic; Before center, before straighten, after move')
+    disp('Ultrasonic; Before straighten, before center, after move')
     disp(u)
-    rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius);
-    if (rover_centered == 1) 
+    [rover_straight, cmdstring_history] = straighten_rover(u, u_loc, s_cmd, s_rply, drive_margin, cmdstring_history, cmdstring_history_idx, rover_radius);
+    if (rover_straight == 1) 
         % Make sure the rover is centered in a tile, wihtin an acceptable
         % margin
         u = take_ultrasonic_measurements(s_cmd, s_rply);
-        disp('Ultrasonic; After center, before straight, before move')
+        disp('Ultrasonic; After straighten, before center, before move')
         disp(u)
-        [rover_straight, cmdstring_history] = straighten_rover(u, u_loc, s_cmd, s_rply, drive_margin, cmdstring_history, cmdstring_history_idx, rover_radius);
+        rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius);
     end
-    if (rover_centered == 1 && rover_straight == 1)
+    if (rover_straight == 1 && rover_centered == 1)
         % Move the rover one step in the optimal direction
         u = take_ultrasonic_measurements(s_cmd, s_rply);
         disp('Ultrasonic; After straighten, after center, before move')
@@ -117,7 +117,7 @@ function [rover_straight, cmd_history] = straighten_rover(u, u_loc, s_cmd, s_rpl
     
     %rot = min_rot;
     
-    if (u2_u45_diff > leftright_thresh_straight + leftright_thresh_straight *  && u2_u45_diff < upper_thresh_straight && (u4_u5_diff > lower_thresh_straight && u4_u5_diff < upper_thresh_straight))
+    if (u2_u45_diff > leftright_thresh_straight && u2_u45_diff < upper_thresh_straight && (u4_u5_diff > lower_thresh_straight && u4_u5_diff < upper_thresh_straight))
         % Determine number of degrees to turn rover
         if (u2_u45_diff > max_rot_thresh)
             rot = max_rot;
