@@ -214,7 +214,7 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
     max_speed_dist_thresh = 7;
     max_speed = 2;
     
-    if space_to_center == 1;
+    if space_to_center = 1;
         if (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max)))
             rover_centered = 1;
 
@@ -262,7 +262,7 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
         elseif (unique_loc == 1)
             rover_centered = 1;
         end
-    elseif space_to_center == 0;
+    elseif space_to_center = 0;
         rover_centered = 1;
     end
 end
