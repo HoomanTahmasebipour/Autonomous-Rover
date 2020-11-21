@@ -32,7 +32,7 @@ u_mat = zeros(3,6);
 
 %% Main Rover Control Code
 rover_centered = 0;
-
+straighten_attempts = 0;
 while 1    
     % Rotate rover until sensor measurements from u4/u5 AND u1/u6 are
     % within an acceptable range
@@ -40,7 +40,13 @@ while 1
     disp('Ultrasonic Readings')
     disp(u)
     unique_loc = 0;
-    rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius);
+    if (straighten_attempts < 5)
+        rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius);
+        straighten_attempts = straighten_attempts + 1;
+    else
+        straighten_attempts = 0;
+        rover_straight = 1;
+    end
     if (rover_straight == 1) 
         [rover_centered, unique_loc] = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius);
     end
