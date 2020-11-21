@@ -15,14 +15,13 @@ else
 end
 
 % Robot Sensor Measurements
-u = [0,0,0,0,0,0];  % Ultrasonic measurements
 u_loc = [3.09,-1.56 ; 1.13,3.52 ; -3.49,1.04 ; -2.34375,-3.43 ; 2.34375,-3.43 ; 2.68,3.52];
 pos = [0,0,0];  % Position (x,y,rotation)
 rot_stuck = 90;
 stepcount = 0;
 
-rover_radius = 4.5;
-rover_dist_thresh = 1.5;
+rover_radius = 4;
+rover_dist_thresh = 2;
 ultrasonic_margin = 0.18;
 
 % Stuck condition variables
@@ -52,16 +51,8 @@ end
 function [u] = take_ultrasonic_measurements(s_cmd, s_rply)
     % This function takes ultrasonic readings as many as num_measurements,
     % averages them out, and returns them in a 1x6 vector.
-    u = [0,0,0,0,0,0];
-    num_measurements = 1;
-    
-    for i = 1:num_measurements
-        cmdstring = ['ua' newline];
-        u = tcpclient_write(cmdstring, s_cmd, s_rply);
-    end
-    
-    % average out the sensor values
-    u = u / num_measurements;
+    cmdstring = ['ua' newline];
+    u = tcpclient_write(cmdstring, s_cmd, s_rply);
 end
 
 function rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius)
@@ -72,7 +63,7 @@ function rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius
     disp('u4_distance, u5_distance')
     disp([u4,u5])
     lower_thresh_straight = 0.2;
-    upper_thresh_straight = 2;
+    upper_thresh_straight = 5;
     u4_u5_sensor_displacement = 4.6875;
     u4_u5_diff = abs(u4 - u5);
         
@@ -137,6 +128,9 @@ function [rover_centered, unique_loc] = center_rover(u, u_loc, s_cmd, s_rply, ul
         adjustment = u_right / 2;
         req_dist = adjustment / tand(angle);
         speed = adjustment / sind(angle);
+        if (speed > 3)
+            speed = 3;
+        end
         
         if (u1 > req_dist)
             cmdstring = [strcat('r1-',num2str(-angle)) newline];
@@ -157,7 +151,9 @@ function [rover_centered, unique_loc] = center_rover(u, u_loc, s_cmd, s_rply, ul
         adjustment = u_left / 2;
         req_dist = adjustment / tand(angle);
         speed = adjustment / sind(angle);
-        
+        if (speed > 3)
+            speed = 3;
+        end
         if (u1 > req_dist) 
             cmdstring = [strcat('r1-',num2str(angle)) newline];
             reply = tcpclient_write(cmdstring, s_cmd, s_rply);
@@ -190,7 +186,7 @@ function move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
     disp([u1,u2,u3,u4,u5,u6])
     u45 = abs(u4 + u5)/2;
         
-    if (u2 > u45 && u2 > rover_dist_thresh*1.75 && u1 <= rover_dist_thresh)
+    if (u2 > u45 && u2 > rover_dist_thresh && u1 <= rover_dist_thresh)
         % Move left, first determine rover speed
         speed = u2 / 2;
         if (speed > 6)
@@ -204,7 +200,7 @@ function move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         disp('Move left')
         disp(cmdstring)
-    elseif (u45 >= u2 && u45 >= rover_dist_thresh*1.75 && u1 <= rover_dist_thresh)
+    elseif (u45 >= u2 && u45 >= rover_dist_thresh && u1 <= rover_dist_thresh)
         % Move right, first determine rover speed
         if (u4 <= u5)
             speed = u4 / 2;
@@ -222,7 +218,7 @@ function move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         disp('Move right')
         disp(cmdstring)
-    elseif (u1 > rover_dist_thresh*1.25)
+    elseif (u1 > rover_dist_thresh)
         % Move forward, first determine rover speed
         speed = u1 / 2;
         if (speed > 6)
