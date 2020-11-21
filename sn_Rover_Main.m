@@ -48,7 +48,6 @@ while 1
         disp(u)
     else
     end
-    
     % align rover in center of path
     if (rover_straight == 1) 
         % Make sure the rover is centered in a tile, wihtin an acceptable
@@ -68,6 +67,7 @@ while 1
         disp(u)
         move_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius);
     end
+    
     
 %     % Handle the case that the rover is oscilating between commands
 %     if (mod(cmdstring_history_idx,3) == 0)
@@ -91,13 +91,16 @@ function [u] = take_ultrasonic_measurements(s_cmd, s_rply)
     % averages them out, and returns them in a 1x6 vector.
     u = [0,0,0,0,0,0];
     num_measurements = 1;
+%     
+%     for i = 1:num_measurements
+%         for ct = 1:6
+%             cmdstring = [strcat('u',num2str(ct)) newline];
+%             u(ct) = u(ct) + tcpclient_write(cmdstring, s_cmd, s_rply);
+%         end
+%     end
+    cmdstring = ['ua' newline];
+    u = tcpclient_write(cmdstring, s_cmd, s_rply);
     
-    for i = 1:num_measurements
-        for ct = 1:6
-            cmdstring = [strcat('u',num2str(ct)) newline];
-            u(ct) = u(ct) + tcpclient_write(cmdstring, s_cmd, s_rply);
-        end
-    end
     % average out the sensor values
     u = u / num_measurements;
 end
@@ -212,7 +215,7 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
         rover_centered = 1;
         disp('rover_centered')
         disp(rover_centered)
-    elseif (unique_loc == 0 && (u_left < centered_dist_from_wall_min || (u_right < u_left && u_right > centered_dist_from_wall_max)))
+    elseif (unique_loc == 0 && (u_left < centered_dist_from_wall_min || (u_right > u_left && u_right > centered_dist_from_wall_max)))
         % Either left side is too close or right side is too far, move right
         if (u1 > u1_max_dist)
             speed = u_right / 2;        
@@ -229,7 +232,7 @@ function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margi
             disp('rover_centered')
             disp(rover_centered)
         end
-    elseif (unique_loc == 0 && (u_right < centered_dist_from_wall_min || (u_left < u_right && u_left > centered_dist_from_wall_max)))
+    elseif (unique_loc == 0 && (u_right < centered_dist_from_wall_min || (u_left > u_right && u_left > centered_dist_from_wall_max)))
         % Eithert right side is too close or left side is too far, move left
         if (u1 > u1_max_dist)
             speed = u_left / 2;        
