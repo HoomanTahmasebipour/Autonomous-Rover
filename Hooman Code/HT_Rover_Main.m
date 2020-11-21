@@ -15,6 +15,7 @@ else
 end
 
 % Robot Sensor Measurements
+u = [0,0,0,0,0,0];
 u_loc = [3.09,-1.56 ; 1.13,3.52 ; -3.49,1.04 ; -2.34375,-3.43 ; 2.34375,-3.43 ; 2.68,3.52];
 pos = [0,0,0];  % Position (x,y,rotation)
 rot_stuck = 90;
