@@ -16,13 +16,13 @@ end
 
 % Robot Sensor Measurements
 u = [0,0,0,0,0,0];  % Ultrasonic measurements
-u_loc = [3.09,-1.56 ; 1.13,3.52 ; -3.49,1.04 ; -1.15,-3.43 ; 1.08,-3.43 ; 2.68,3.52];
+u_loc = [3.09,-1.56 ; 1.13,3.52 ; -3.49,1.04 ; -2.34375,-3.43 ; 2.34375,-3.43 ; 2.68,3.52];
 pos = [0,0,0];  % Position (x,y,rotation)
 rot_stuck = 90;
 stepcount = 0;
 
-rover_radius = 4.915;
-rover_dist_thresh = 1;
+rover_radius = 4.5;
+rover_dist_thresh = 1.5;
 ultrasonic_margin = 0.18;
 
 % Stuck condition variables
@@ -72,8 +72,8 @@ function rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius
     disp('u4_distance, u5_distance')
     disp([u4,u5])
     lower_thresh_straight = 0.2;
-    upper_thresh_straight = 1;
-    u4_u5_sensor_displacement = 2.23;
+    upper_thresh_straight = 2;
+    u4_u5_sensor_displacement = 4.6875;
     u4_u5_diff = abs(u4 - u5);
         
     if ((u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight))
