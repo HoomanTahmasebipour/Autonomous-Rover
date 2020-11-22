@@ -33,22 +33,29 @@ u_mat = zeros(3,6);
 %% Main Rover Control Code
 rover_centered = 0;
 straighten_attempts = 0;
+unique_loc = 0;
 while 1    
     % Rotate rover until sensor measurements from u4/u5 AND u1/u6 are
     % within an acceptable range
     u = take_ultrasonic_measurements(s_cmd, s_rply);
     disp('Ultrasonic Readings')
     disp(u)
+    
     unique_loc = 0;
+    if (u(1) > 10 && u(2) > 10 && u(3) > 10 && (u(4) > 10 || u(5) > 10))
+        unique_loc = 1;
+        disp('unique_loc')
+    end
+    
     if (straighten_attempts < 5)
-        rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius);
+        rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius, unique_loc);
         straighten_attempts = straighten_attempts + 1;
     else
         straighten_attempts = 0;
         rover_straight = 1;
     end
     if (rover_straight == 1) 
-        [rover_centered, unique_loc] = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius);
+        rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc);
     end
     if ((rover_centered == 1 && rover_straight == 1) || unique_loc == 1)
         move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
@@ -62,7 +69,7 @@ function [u] = take_ultrasonic_measurements(s_cmd, s_rply)
     u = tcpclient_write(cmdstring, s_cmd, s_rply);
 end
 
-function rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius)
+function rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius, unique_loc)
     % This function ensures that after each step of the rover, it is
     % continuing to move straight
     u4 = u(4) - (rover_radius - abs(u_loc(4,2)));
@@ -74,9 +81,12 @@ function rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius
     u4_u5_sensor_displacement = 4.6875;
     u4_u5_diff = abs(u4 - u5);
         
-    if ((u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight))
+    if (unique_loc == 0 && (u4_u5_diff < lower_thresh_straight || u4_u5_diff > upper_thresh_straight))
         rover_straight = 1;
         disp('Rover is straight')
+    elseif (unique_loc == 1)
+        rover_straight = 1;
+        disp('Unique location, assuming rover is straight')
     else
         % Rover is not straight
         disp('Rover is not straight')
@@ -101,7 +111,7 @@ function rover_straight = straighten_rover(u, u_loc, s_cmd, s_rply, rover_radius
     end 
 end
 
-function [rover_centered, unique_loc] = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius)
+function rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc)
     % This function centers the rover as much as possible to ensure
     % straight motion
     u1 = u(1) - (rover_radius - abs(u_loc(1,1)));
@@ -120,11 +130,6 @@ function [rover_centered, unique_loc] = center_rover(u, u_loc, s_cmd, s_rply, ul
     centered_dist_from_wall = 6 - rover_radius;
     centered_dist_from_wall_min = centered_dist_from_wall - centered_dist_from_wall * ultrasonic_margin;
     centered_dist_from_wall_max = centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
-    unique_loc = 0;
-    if (u_left > 10 && u_right > 10 && u1 > 10 && u3 > 10)
-        unique_loc = 1;
-        disp('unique_loc')
-    end
         
     if (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max)))
         rover_centered = 1;
@@ -252,36 +257,5 @@ function move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         disp('Reverse')
         disp(cmdstring)
-    end
-end
-
-function check_stuck_condition(u, u_loc, s_cmd, s_rply, log, u_mat, stuck_cond, rover_radius, rover_dist_thresh)
-    u3 = u(3) - (rover_radius - abs(u_loc(3,1)));
-    if (log < 3)
-        u_mat(log,:) = u;
-        log = log + 1;
-    elseif (log == 3)
-        u_mat(log,:) = u;
-        log = 1;
-        umat1_umat2_diff = abs(max(u_mat(1,:) - u_mat(2,:)));
-        umat1_umat3_diff = abs(max(u_mat(1,:) - u_mat(3,:)));
-        umat2_umat3_diff = abs(max(u_mat(2,:) - u_mat(3,:)));
-        if (umat1_umat2_diff < stuck_cond && umat1_umat3_diff < stuck_cond && umat2_umat3_diff < stuck_cond )
-            % Check if theres space to move back
-            if (u3 > rover_dist_thresh)
-                disp("Stuck, but finding way out");
-                speed = u3 / 2;
-                if (speed > 10)
-                    speed = 10;
-                end
-                % Move backwards and reorient, try again
-                cmdstring = [strcat('a1-',num2str(speed)) newline];
-                reply = tcpclient_write(cmdstring, s_cmd, s_rply);         
-                cmdstring = [strcat('r1-',num2str(-10)) newline];
-                reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-            else
-                disp("Stuck and I need help")
-            end
-        end
     end
 end
