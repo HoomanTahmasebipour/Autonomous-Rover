@@ -121,8 +121,8 @@ rover_centered = 0;
 straighten_attempts = 0;
 unique_loc = 0;
 
-
-while max(p(:)) < 0.08
+while 1
+% while max(p(:)) < 0.08
     % Take Measurements (read from simulator or rover)
     u = take_ultrasonic_measurements(s_cmd, s_rply);
     disp('Ultrasonic Readings')
