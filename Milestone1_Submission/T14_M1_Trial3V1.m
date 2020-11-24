@@ -54,7 +54,7 @@ while 1
         straighten_attempts = 0;
         rover_straight = 1;
     end
-    if (rover_straight == 1) 
+    if (rover_straight == 1)
         rover_centered = center_rover(u, u_loc, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc);
     end
     if ((rover_centered == 1 && rover_straight == 1) || unique_loc == 1)
