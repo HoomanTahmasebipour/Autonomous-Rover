@@ -198,7 +198,7 @@ function move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
     disp([u1,u2,u3,u4,u5,u6])
     u45 = abs(u4 + u5)/2;
         
-    if (u2 > u45 && u2 > rover_dist_thresh && u1 <= rover_dist_thresh)
+    if (u2 > u45 && u2 > rover_dist_thresh && u1 <= rover_dist_thresh*1.25)
         % Move left, first determine rover speed
         speed = u2 / 2;
         if (speed > 6)
@@ -212,7 +212,7 @@ function move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         disp('Move left')
         disp(cmdstring)
-    elseif (u45 >= u2 && u45 >= rover_dist_thresh && u1 <= rover_dist_thresh)
+    elseif (u45 >= u2 && u45 >= rover_dist_thresh && u1 <= rover_dist_thresh*1.25)
         % Move right, first determine rover speed
         if (u4 <= u5)
             speed = u4 / 2;
@@ -230,7 +230,7 @@ function move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_thresh)
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         disp('Move right')
         disp(cmdstring)
-    elseif (u1 > rover_dist_thresh)
+    elseif (u1 > rover_dist_thresh*1.25)
         % Move forward, first determine rover speed
         speed = u1 / 2;
         if (speed > 6)
