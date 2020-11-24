@@ -143,7 +143,7 @@ rover_centered = 0;
 straighten_attempts = 0;
 unique_loc = 0;
 
-while 1
+while max(p(:)) < 0.08
     % Take Measurements (read from simulator or rover)
     u = take_ultrasonic_measurements(s_cmd, s_rply);
     disp('Ultrasonic Readings')
@@ -340,7 +340,7 @@ function heading = move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_
     disp([u1,u2,u3,u4,u5,u6])
     u45 = abs(u4 + u5)/2;
     
-    if (u2 > u45 && u2 > rover_dist_thresh*1.75 && u1 <= rover_dist_thresh)
+    if (u2 > u45 && u2 > rover_dist_thresh && u1 <= rover_dist_thresh*1.25)
         % Move left, first determine rover speed
         speed = u2 / 2;
         if (speed > 6)
@@ -355,7 +355,7 @@ function heading = move_rover(u, u_loc, s_cmd, s_rply, rover_radius, rover_dist_
         disp('Move left')
         disp(cmdstring)
         heading = mod(heading + 90,360);
-    elseif (u45 >= u2 && u45 >= rover_dist_thresh*1.75 && u1 <= rover_dist_thresh)
+    elseif (u45 >= u2 && u45 >= rover_dist_thresh && u1 <= rover_dist_thresh*1.25)
         % Move right, first determine rover speed
         if (u4 <= u5)
             speed = u4 / 2;
