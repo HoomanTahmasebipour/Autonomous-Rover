@@ -782,12 +782,12 @@ function [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_
         end
         if ((rover_centered == 1 && rover_straight == 1) || unique_loc == 1)
             heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_heading);
+            tile_val = nav_grid(new_tile_row, new_tile_col);
         end
 
         if (rover_straight == 1)
             [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
             [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
-            tile_val = nav_grid(tile_row, tile_col);
         end
     end
 end
