@@ -24,7 +24,7 @@ stepcount = 0;
 rover_radius = 4;
 rover_dist_thresh = 2;
 ultrasonic_margin = 0.18;
-
+disp("The rover is attempting to track its location in this version, to ensure localization is working as expected")
 %% Localization - create world and initialize probability
 %provide measurements and movements
 k = 0;
@@ -94,7 +94,7 @@ end
 
 comp = tcpclient_write(['c1' newline], s_cmd, s_rply);
 disp(comp)
-if sim
+if (sim == 1)
     if comp < 45 && comp > -45
         heading = 0;
     elseif comp < 135 && comp > 45
