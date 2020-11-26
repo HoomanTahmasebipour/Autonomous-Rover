@@ -70,49 +70,6 @@ p = ones(dim2,dim1)*(1/n);
 
 figure;
 
-%% Request User Decision on which Dropoff location to go to
-disp("Drop off location '1': (30, 18)")
-disp("Drop off location '2': (66, 42)")
-disp("Drop off location '3': (90, 42)")
-disp("Drop off location '4': (90, 6)")
-drop_off_id = 1;%input("From the above options, which drop off location would you like to go to? (Only 1,2,3,4 accepted as inputs)\n");
-if (drop_off_id == 1)
-    disp("Going to drop off location 1. Rover starting.....")
-elseif (drop_off_id == 1)
-    disp("Going to drop off location 2. Rover starting.....")
-elseif (drop_off_id == 1)
-    disp("Going to drop off location 3. Rover starting.....")
-elseif (drop_off_id == 1)
-    disp("Going to drop off location 4. Rover starting.....")
-else
-    disp("Invalid option selected. Going to default drop off location 1")
-    drop_off_id = 1;
-end
-%% Build Navigation Matrices
-loading_zone_nav = [0  0   1  2  inf  6 inf 8; 
-                    0  0  inf 3   4   5  6  7; 
-                    1 inf  5 inf inf  6 inf 8; 
-                    2  3   4  5   6   7 inf 9];
-
-drop_off_1_nav = [6  7   8  9  inf  7 inf 9; 
-                  5  6  inf 8   7   6  7  8; 
-                  4 inf  0 inf inf  5 inf 9; 
-                  3  2   1  2   3   4 inf 10];
-                
-drop_off_2_nav = [7  6   5  4  inf  0 inf 4; 
-                  8  7  inf 3   2   1  2  3; 
-                  9 inf  7 inf inf  2 inf 4; 
-                  8  7   6  5   4   3 inf 5];
-                
-drop_off_3_nav = [9   8   7   6  inf  4 inf 0; 
-                  10  9  inf  5   4   3  2  1; 
-                  11 inf  9  inf inf  4 inf 2; 
-                  10  9   8   7   6   5 inf 3];
-                
-drop_off_4_nav = [10   9   8   7  inf  5 inf 3; 
-                  11  10  inf  6   5   4  3  2; 
-                  12 inf  10  inf inf  5 inf 1; 
-                  11  10   9   8   7   6 inf 0];
 %% Straighten rover and determine it's initial heading
 rover_centered = 0;
 straighten_attempts = 0;

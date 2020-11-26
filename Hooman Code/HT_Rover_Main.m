@@ -117,27 +117,35 @@ end
 
 %% Main Rover Control Code: Localize, navigate to loading zone, navigate to drop off zone
 heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radius, u_loc);
-[localized, heading, tile_row, tile_col, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin);
+[localized, heading, loc_x, loc_y, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin);
+[tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
+disp(['Rover has determined it is in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
+disp("------------------------- -----------------------------------------------")
+
 if (localized == 1)
     % Drive the Rover to the Loading Zone
     disp("Rover is now driving to the loading zone")
-    [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, loading_zone_nav, tile_row, tile_col, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+    [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, loading_zone_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
     disp(['Rover has arrived at the loading zone, in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
 end
 
 if (localized == 1)
     disp(['Rover is now driving to drop off zone with ID: ' drop_off_id])
     if (drop_off_id == 1)
-        [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_1_nav, tile_row, tile_col, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_1_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
         disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
     elseif (drop_off_id == 2)
-        [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_2_nav, tile_row, tile_col, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_2_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
         disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
     elseif (drop_off_id == 3)
-        [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_3_nav, tile_row, tile_col, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_3_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
         disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
     elseif (drop_off_id == 4)
-        [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_4_nav, tile_row, tile_col, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_4_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
         disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
     end
 end
@@ -189,7 +197,7 @@ function heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radi
     disp(['Heading: ' num2str(heading)])
 end
 
-function [localized, heading, tile_row, tile_col, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin)
+function [localized, heading, loc_x, loc_y, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin)
     rover_centered = 0;
     straighten_attempts = 0;
     unique_loc = 0;
@@ -241,9 +249,6 @@ function [localized, heading, tile_row, tile_col, p, k, M, ultra] = ultrasonic_l
     end
     localized = 1;
     heading = heading;
-    [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
-    disp(['Rover has determined it is in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
-    disp("------------------------- -----------------------------------------------")
 end
 
 function [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc)
@@ -735,9 +740,10 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
     end
 end
 
-function [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, nav_grid, tile_row, tile_col, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin)
+function [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, nav_grid, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin)
     % Direction value of 90 means north, 0 means east, 270 means south, 180
     % means west
+    [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
     tile_val = nav_grid(tile_row, tile_col);
     rover_straight = 0;
     rover_centered = 0;
@@ -750,6 +756,7 @@ function [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_
         disp(['########################## Step Count: ' num2str(k) ' ##########################'])
         disp(['## Current Tile Location: (' num2str(tile_row) ',' num2str(tile_col) ') ##'])
         disp(['## Current Tile Value: ' num2str(tile_val) ', Next Tile Value' num2str(nav_grid(new_tile_row, new_tile_col)) ' ##'])
+        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
         [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
         disp('Ultrasonic Measurements')
         disp(u)
@@ -779,15 +786,23 @@ function [tile_row, tile_col, heading, p, k, M, ultra] = drive_to_destination(s_
 
         if (rover_straight == 1)
             rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc, first_unique_loc, heading);
+            if (first_unique_loc == 1)
+                tile_val = nav_grid(new_tile_row, new_tile_col);
+                rover_centered = 0;
+                unique_loc = 0;
+                tile_row = new_tile_row;
+                tile_col = new_tile_col;
+            end
         end
         if ((rover_centered == 1 && rover_straight == 1) || unique_loc == 1)
             heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_heading);
             tile_val = nav_grid(new_tile_row, new_tile_col);
+            tile_row = new_tile_row;
+            tile_col = new_tile_col;
         end
 
         if (rover_straight == 1)
             [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
-            [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
         end
     end
 end
