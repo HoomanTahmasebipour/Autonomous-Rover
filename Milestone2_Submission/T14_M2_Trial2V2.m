@@ -3,13 +3,11 @@ close all
 clc
 
 %% Request User Decision on which Dropoff location to go to
-disp("Drop off location '1': (30, 18)")
-disp("Drop off location '2': (66, 42)")
-disp("Drop off location '3': (90, 42)")
-disp("Drop off location '4': (90, 6)")
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Setting drop off to be position 1 by default %%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp("Drop off location '1': (3, 3)")
+disp("Drop off location '2': (1, 6)")
+disp("Drop off location '3': (1, 8)")
+disp("Drop off location '4': (4, 8)")
+disp("SETTING DROP OFF LOCATION TO BE '1' BY DEFAULT")
 drop_off_id = 1;%input("From the above options, which drop off location would you like to go to? (Only 1,2,3,4 accepted as inputs)\n");
 if (drop_off_id == 1)
     disp("Going to drop off location 1. Rover starting.....")
@@ -25,7 +23,10 @@ else
 end
 
 %% Rover/Simulation Initialization and Setup
-sim = 1;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Set sim variable to 0 for testing with Rover %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+sim = 0;
 
 if sim
 % Initialize tcp server to read and respond to algorithm commands

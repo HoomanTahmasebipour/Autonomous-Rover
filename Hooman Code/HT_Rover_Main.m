@@ -1,8 +1,33 @@
-%% Rover Initialization and Setup
 clear
 close all
 clc
 
+%% Request User Decision on which Dropoff location to go to
+disp("Drop off location '1': (30, 18)")
+disp("Drop off location '2': (66, 42)")
+disp("Drop off location '3': (90, 42)")
+disp("Drop off location '4': (90, 6)")
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% Setting drop off to be position 1 by default %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+drop_off_id = 1;%input("From the above options, which drop off location would you like to go to? (Only 1,2,3,4 accepted as inputs)\n");
+if (drop_off_id == 1)
+    disp("Going to drop off location 1. Rover starting.....")
+elseif (drop_off_id == 2)
+    disp("Going to drop off location 2. Rover starting.....")
+elseif (drop_off_id == 3)
+    disp("Going to drop off location 3. Rover starting.....")
+elseif (drop_off_id == 4)
+    disp("Going to drop off location 4. Rover starting.....")
+else
+    disp("Invalid option selected. Going to default drop off location 1")
+    drop_off_id = 1;
+end
+
+%% Rover/Simulation Initialization and Setup
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Set sim variable to 0 for testing with Rover %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 sim = 1;
 
 if sim
@@ -95,25 +120,6 @@ drop_off_4_nav = [10   9   8   7  inf  5 inf 3;
                   11  10  inf  6   5   4  3  2; 
                   12 inf  10  inf inf  5 inf 1; 
                   11  10   9   8   7   6 inf 0];
-
-%% Request User Decision on which Dropoff location to go to
-disp("Drop off location '1': (30, 18)")
-disp("Drop off location '2': (66, 42)")
-disp("Drop off location '3': (90, 42)")
-disp("Drop off location '4': (90, 6)")
-drop_off_id = input("From the above options, which drop off location would you like to go to? (Only 1,2,3,4 accepted as inputs)\n");
-if (drop_off_id == 1)
-    disp("Going to drop off location 1. Rover starting.....")
-elseif (drop_off_id == 2)
-    disp("Going to drop off location 2. Rover starting.....")
-elseif (drop_off_id == 3)
-    disp("Going to drop off location 3. Rover starting.....")
-elseif (drop_off_id == 4)
-    disp("Going to drop off location 4. Rover starting.....")
-else
-    disp("Invalid option selected. Going to default drop off location 1")
-    drop_off_id = 1;
-end
 
 %% Main Rover Control Code: Localize, navigate to loading zone, navigate to drop off zone
 heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radius, u_loc);
