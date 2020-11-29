@@ -1,5 +1,5 @@
 
-function [heading, p, k, M, ultra] = find_and_load_block(s_cmd, s_rply, rover_radius, u_loc)
+function [heading, p, k, M, ultra] = find_and_load_block(heading, s_cmd, s_rply, rover_radius, u_loc)
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
     deg = 10;
     tot_rot = 0;
