@@ -569,7 +569,7 @@ function [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k)
     [loc_y,loc_x] = ind2sub(size(p),index);
     disp('Possible location of rover (x, y):')
     disp([loc_x loc_y p(loc_y, loc_x)])
-    if (p(loc_y, loc_x) > 0.07)
+    if (p(loc_y, loc_x) > 0.09)
         localized = 1;
     else
         localized = 0;

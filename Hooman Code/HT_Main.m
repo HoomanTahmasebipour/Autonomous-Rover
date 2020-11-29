@@ -23,7 +23,7 @@ global ir_circle
 
 %% User-editable variables and flags
 % Constants
-bot_center = [54,6];  % Robot starting location
+bot_center = [42,6];  % Robot starting location
 
 bot_rot = 150;            % Robot starting rotation
 block_center = [12,37]; % Block starting location
