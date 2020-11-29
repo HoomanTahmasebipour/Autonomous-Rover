@@ -3,14 +3,16 @@ close all
 clc
 
 %% Request User Decision on which Dropoff location to go to
-disp("Drop off location '1': (30, 18)")
-disp("Drop off location '2': (66, 42)")
-disp("Drop off location '3': (90, 42)")
-disp("Drop off location '4': (90, 6)")
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Setting drop off to be position 1 by default %%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-drop_off_id = 1;%input("From the above options, which drop off location would you like to go to? (Only 1,2,3,4 accepted as inputs)\n");
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% Requesting Input By Default %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+disp("Drop off location '1': (3, 3)")
+disp("Drop off location '2': (1, 6)")
+disp("Drop off location '3': (1, 8)")
+disp("Drop off location '4': (4, 8)")
+
+drop_off_id = input("From the above options, which drop off location would you like to go to? (Only 1,2,3,4 accepted as inputs)\n");
 if (drop_off_id == 1)
     disp("Going to drop off location 1. Rover starting.....")
 elseif (drop_off_id == 2)
@@ -25,6 +27,9 @@ else
 end
 
 %% Rover/Simulation Initialization and Setup
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Set sim variable to 0 for testing with Rover %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 sim = 1;
 
 if sim
@@ -93,6 +98,31 @@ p = ones(dim2,dim1)*(1/n);
 figure;
 
 %% Build Navigation Matrices
+loading_zone_nav2 = [0*ones(4,4)  0*ones(4,4)   1*ones(4,4)  2*ones(4,4)  inf*ones(4,4)  6*ones(4,4) inf*ones(4,4) 8*ones(4,4); 
+                    0*ones(4,4)  0*ones(4,4)  inf*ones(4,4) 3*ones(4,4)   4*ones(4,4)   5*ones(4,4)  6*ones(4,4)  7*ones(4,4);
+                    1*ones(4,4) inf*ones(4,4)  5*ones(4,4) inf*ones(4,4) inf*ones(4,4)  6*ones(4,4) inf*ones(4,4) 8*ones(4,4); 
+                    2*ones(4,4)  3*ones(4,4)   4*ones(4,4)  5*ones(4,4)   6*ones(4,4)   7*ones(4,4) inf*ones(4,4) 9*ones(4,4)];
+
+drop_off_1_nav2 = [6*ones(4,4)    7*ones(4,4)    8*ones(4,4)    9*ones(4,4)   inf*ones(4,4)  7*ones(4,4)  inf*ones(4,4) 9*ones(4,4); 
+                  5*ones(4,4)    6*ones(4,4)    inf*ones(4,4)  8*ones(4,4)   7*ones(4,4)    6*ones(4,4)  7*ones(4,4)   8*ones(4,4); 
+                  4*ones(4,4)    inf*ones(4,4)  0*ones(4,4)    inf*ones(4,4) inf*ones(4,4)  5*ones(4,4)  inf*ones(4,4) 9*ones(4,4); 
+                  3*ones(4,4)    2*ones(4,4)    1*ones(4,4)    2*ones(4,4)   3*ones(4,4)    4*ones(4,4)  inf*ones(4,4) 10*ones(4,4)];
+
+drop_off_2_nav2 = [7*ones(4,4)    6*ones(4,4)    5*ones(4,4)    4*ones(4,4)   inf*ones(4,4)  0*ones(4,4)  inf*ones(4,4) 4*ones(4,4); 
+                  8*ones(4,4)    7*ones(4,4)    inf*ones(4,4)  3*ones(4,4)   2*ones(4,4)    1*ones(4,4)  2*ones(4,4)   3*ones(4,4); 
+                  9*ones(4,4)    inf*ones(4,4)  7*ones(4,4)    inf*ones(4,4) inf*ones(4,4)  2*ones(4,4)  inf*ones(4,4) 4*ones(4,4); 
+                  8*ones(4,4)    7*ones(4,4)    6*ones(4,4)    5*ones(4,4)   4*ones(4,4)    3*ones(4,4)  inf*ones(4,4) 5*ones(4,4)];
+                
+drop_off_3_nav2 = [9*ones(4,4)    8*ones(4,4)    7*ones(4,4)    6*ones(4,4)   inf*ones(4,4)  4*ones(4,4)  inf*ones(4,4) 0*ones(4,4); 
+                  10*ones(4,4)   9*ones(4,4)    inf*ones(4,4)  5*ones(4,4)   4*ones(4,4)    3*ones(4,4)  2*ones(4,4)   1*ones(4,4); 
+                  11*ones(4,4)   inf*ones(4,4)  9*ones(4,4)    inf*ones(4,4) inf*ones(4,4)  4*ones(4,4)  inf*ones(4,4) 2*ones(4,4); 
+                  10*ones(4,4)   9*ones(4,4)    8*ones(4,4)    7*ones(4,4)   6*ones(4,4)    5*ones(4,4)  inf*ones(4,4) 3*ones(4,4)];
+                
+drop_off_4_nav2 = [10*ones(4,4)   9*ones(4,4)    8*ones(4,4)    7*ones(4,4)   inf*ones(4,4)  5*ones(4,4)  inf*ones(4,4) 3*ones(4,4); 
+                  11*ones(4,4)   10*ones(4,4)   inf*ones(4,4)  6*ones(4,4)   5*ones(4,4)    4*ones(4,4)  3*ones(4,4)   2*ones(4,4); 
+                  12*ones(4,4)   inf*ones(4,4)  10*ones(4,4)   inf*ones(4,4) inf*ones(4,4)  5*ones(4,4)  inf*ones(4,4) 1*ones(4,4); 
+                  11*ones(4,4)   10*ones(4,4)   9*ones(4,4)    8*ones(4,4)   7*ones(4,4)    6*ones(4,4)  inf*ones(4,4) 0*ones(4,4)];
+
 loading_zone_nav = [0  0   1  2  inf  6 inf 8; 
                     0  0  inf 3   4   5  6  7; 
                     1 inf  5 inf inf  6 inf 8; 
@@ -120,39 +150,40 @@ drop_off_4_nav = [10   9   8   7  inf  5 inf 3;
 
 %% Main Rover Control Code: Localize, navigate to loading zone, navigate to drop off zone
 heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radius, u_loc);
-[localized, heading, loc_x, loc_y, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin);
+[heading, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin);
+[u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+[p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+p = update_localization_map(u, M, p, ultra, k);
 [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
 disp(['Rover has determined it is in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
 disp("------------------------- -----------------------------------------------")
 
-if (localized == 1)
-    % Drive the Rover to the Loading Zone
-    disp("Rover is now driving to the loading zone")
-    [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, loading_zone_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
-    disp(['Rover has arrived at the loading zone, in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
+% Drive the Rover to the Loading Zone
+disp("Rover is now driving to the loading zone")
+[heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, loading_zone_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+[u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+[p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+p = update_localization_map(u, M, p, ultra, k);
+[tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
+disp(['Rover has arrived at the loading zone, in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
+
+disp(['Rover is now driving to drop off zone with ID: ' num2str(drop_off_id)])
+if (drop_off_id == 1)
+    [heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_1_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+elseif (drop_off_id == 2)
+    [heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_2_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+elseif (drop_off_id == 3)
+    [heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_3_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
+elseif (drop_off_id == 4)
+    [heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_4_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
 end
 
-if (localized == 1)
-    disp(['Rover is now driving to drop off zone with ID: ' drop_off_id])
-    if (drop_off_id == 1)
-        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_1_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
-        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
-        disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
-    elseif (drop_off_id == 2)
-        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_2_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
-        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
-        disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
-    elseif (drop_off_id == 3)
-        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_3_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
-        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
-        disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
-    elseif (drop_off_id == 4)
-        [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, drop_off_4_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin);
-        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
-        disp(['Rover has arrived at the drop off zone with ID: ' drop_off_id ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
-    end
-end
-
+%% Exit Sequence
+[u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+[p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+p = update_localization_map(u, M, p, ultra, k);
+[tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
+disp(['Rover has arrived at the drop off zone with ID: ' num2str(drop_off_id) ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
 %% Helper functions
 function heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radius, u_loc)
     straighten_attempts = 0;
@@ -200,31 +231,35 @@ function heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radi
     disp(['Heading: ' num2str(heading)])
 end
 
-function [localized, heading, loc_x, loc_y, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin)
+function [heading, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin)
     rover_centered = 0;
     straighten_attempts = 0;
+    center_attempts = 0;
     unique_loc = 0;
     first_unique_loc = 0;
     localized = 0;
     old_heading = heading;
-    
+    [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+    disp('Ultrasonic Measurements')
+    disp(u)
+        
     while (localized == 0)    
         % Take Measurements (read from simulator or rover)
         disp(['------------------------- Step Count: ' num2str(k) ' -------------------------'])
-        [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
-        disp('Ultrasonic Measurements')
-        disp(u)
+        %[u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+        %disp('Ultrasonic Measurements')
+        %disp(u)
 
         if (straighten_attempts < 5 && old_heading ~= heading)
             rover_straight = straighten_rover(u, s_cmd, s_rply, unique_loc);
-            straighten_attempts = straighten_attempts + 1;
+            if (rover_straight == 0)
+                straighten_attempts = straighten_attempts + 1;
+            else
+                straighten_attempts = 0;
+            end
         else
             straighten_attempts = 0;
             rover_straight = 1;
-        end
-
-        if (rover_straight == 1)
-            p = update_localization_map(u, M, p, ultra, k);
         end
 
         unique_loc = 0;
@@ -238,19 +273,30 @@ function [localized, heading, loc_x, loc_y, p, k, M, ultra] = ultrasonic_localiz
             disp('unique_loc')
         end
 
-        if (rover_straight == 1)
+        if (rover_straight == 1 && center_attempts < 2)
             rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc, first_unique_loc, heading);
+            if (rover_centered == 0)
+                center_attempts = center_attempts + 1;
+            else
+                center_attempts = 0;
+            end
+        else
+            rover_centered = 1;
+            center_attempts = 0;
         end
         if ((rover_centered == 1 && rover_straight == 1) || unique_loc == 1)
             old_heading = heading;
             heading = move_rover(u, s_cmd, s_rply, rover_dist_thresh, heading);
         end
-
+        
+        [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+        disp('Ultrasonic Measurements')
+        disp(u)
         if (rover_straight == 1)
             [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+            p = update_localization_map(u, M, p, ultra, k);
         end
     end
-    localized = 1;
     heading = heading;
 end
 
@@ -290,7 +336,7 @@ function rover_straight = straighten_rover(u, s_cmd, s_rply, unique_loc)
         rover_straight = 0;
         % Determine number of degrees to turn rover
         rot = atand(u4_u5_diff / u4_u5_sensor_displacement) / 2;
-        
+                
         % Determine if to turn rover CW or CCW
         if (u(4) > u(5))
             disp(['Straighten rover: turn in postive direction by: ' num2str(rot)])
@@ -682,7 +728,73 @@ function [new_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_g
     end
 end
 
-function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_heading)
+function center_rover_before_turn(loc_x, s_cmd, s_rply, heading)
+    speed = 1;
+    if (loc_x <= 4 && loc_x >= 1)
+        if (loc_x == 4 && heading == 180)
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    elseif (loc_x <= 8 && loc_x > 4)
+        if ((heading == 0 && loc_x == 5) || (heading == 180 && loc_x == 8))
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        elseif ((heading == 0 && loc_x == 8) || (heading == 180 && loc_x == 5))
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    elseif (loc_x <= 12 && loc_x > 8)
+        if ((heading == 0 && loc_x == 9) || (heading == 180 && loc_x == 12))
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        elseif ((heading == 0 && loc_x == 12) || (heading == 180 && loc_x == 7))
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    elseif (loc_x <= 16 && loc_x > 12)
+        if ((heading == 0 && loc_x == 13) || (heading == 180 && loc_x == 16))
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        elseif ((heading == 0 && loc_x == 16) || (heading == 180 && loc_x == 13))
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    elseif (loc_x <= 20 && loc_x > 16)
+        if ((heading == 0 && loc_x == 17) || (heading == 180 && loc_x == 20))
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        elseif ((heading == 0 && loc_x == 20) || (heading == 180 && loc_x == 17))
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    elseif (loc_x <= 24 && loc_x > 20)
+        if ((heading == 0 && loc_x == 21) || (heading == 180 && loc_x == 24))
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        elseif ((heading == 0 && loc_x == 24) || (heading == 180 && loc_x == 21))
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    elseif (loc_x <= 28 && loc_x > 24)
+        if ((heading == 0 && loc_x == 25) || (heading == 180 && loc_x == 28))
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        elseif ((heading == 0 && loc_x == 28) || (heading == 180 && loc_x == 25))
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    elseif (loc_x <= 32 && loc_x > 28)
+        if ((heading == 0 && loc_x == 29) || (heading == 180 && loc_x == 32))
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        elseif ((heading == 0 && loc_x == 32) || (heading == 180 && loc_x == 29))
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+        end
+    end
+end
+
+function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_heading, loc_x)
     if (heading - new_heading == 0)
         % drive forward
         speed = u(1) / 2;
@@ -701,6 +813,7 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
         if (speed > 6)
             speed = 6;
         end
+        center_rover_before_turn(loc_x, s_cmd, s_rply, heading)
         % Rotate rover 90 CW and move forward one step
         cmdstring = [strcat('r1-',num2str(90)) newline];
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
@@ -720,6 +833,7 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
         if (speed > 6)
             speed = 6;
         end
+        center_rover_before_turn(loc_x, s_cmd, s_rply, heading)
         % Rotate rover 90 CCW and move forward one step
         cmdstring = [strcat('r1-',num2str(-90)) newline];
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
@@ -743,37 +857,36 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
     end
 end
 
-function [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, nav_grid, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin)
+function [current_heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, current_heading, nav_grid, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin)
     % Direction value of 90 means north, 0 means east, 270 means south, 180
     % means west
     [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
     tile_val = nav_grid(tile_row, tile_col);
-    rover_straight = 0;
     rover_centered = 0;
+    center_attempts = 0;
     unique_loc = 0;
     straighten_attempts = 0;
     first_unique_loc = 0;
+    
+    [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+    disp('Ultrasonic Measurements')
+    disp(u)
+    [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
+    [desired_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_grid, tile_row, tile_col);
+    old_heading = current_heading;
     while (tile_val > 0)
-        [new_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_grid, tile_row, tile_col);
-        
         disp(['########################## Step Count: ' num2str(k) ' ##########################'])
-        disp(['## Current Tile Location: (' num2str(tile_row) ',' num2str(tile_col) ') ##'])
-        disp(['## Current Tile Value: ' num2str(tile_val) ', Next Tile Value' num2str(nav_grid(new_tile_row, new_tile_col)) ' ##'])
-        [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
-        [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
-        disp('Ultrasonic Measurements')
-        disp(u)
-
-        if (straighten_attempts < 5 && heading ~= new_heading)
+                
+        if (straighten_attempts < 5 && old_heading ~= current_heading)
             rover_straight = straighten_rover(u, s_cmd, s_rply, unique_loc);
-            straighten_attempts = straighten_attempts + 1;
+            if (rover_straight == 0)
+                straighten_attempts = straighten_attempts + 1;
+            else
+                straighten_attempts = 0;
+            end
         else
             straighten_attempts = 0;
             rover_straight = 1;
-        end
-
-        if (rover_straight == 1)
-            p = update_localization_map(u, M, p, ultra, k);
         end
 
         unique_loc = 0;
@@ -787,25 +900,81 @@ function [loc_x, loc_y, heading, p, k, M, ultra] = drive_to_destination(s_cmd, s
             disp('unique_loc')
         end
 
-        if (rover_straight == 1)
-            rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc, first_unique_loc, heading);
+        if (rover_straight == 1 && center_attempts < 2)
+            rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc, first_unique_loc, current_heading);
             if (first_unique_loc == 1)
-                tile_val = nav_grid(new_tile_row, new_tile_col);
                 rover_centered = 0;
                 unique_loc = 0;
-                tile_row = new_tile_row;
-                tile_col = new_tile_col;
             end
+            if (rover_centered == 0)
+                center_attempts = center_attempts + 1;
+            else
+                center_attempts = 0;
+            end
+        else
+            rover_centered = 1;
+            center_attempts = 0;
         end
         if ((rover_centered == 1 && rover_straight == 1) || unique_loc == 1)
-            heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_heading);
-            tile_val = nav_grid(new_tile_row, new_tile_col);
-            tile_row = new_tile_row;
-            tile_col = new_tile_col;
+            old_heading = current_heading;
+            current_heading = drive_to_new_heading(u, s_cmd, s_rply, current_heading, desired_heading, loc_x);
         end
-
+        
+        [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+        disp('Ultrasonic Measurements')
+        disp(u)
+        
         if (rover_straight == 1)
-            [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+            [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, current_heading, k);
+            p = update_localization_map(u, M, p, ultra, k);
+            [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
+            tile_val = nav_grid(tile_row, tile_col);
+            [desired_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_grid, tile_row, tile_col);
+            disp('### After Centering or Moving ###')
+            disp(['## Current Tile Location: (' num2str(tile_row) ',' num2str(tile_col) ') Current Tile Value: ' num2str(tile_val) '##'])
+            disp(['## Next Tile Location: (' num2str(new_tile_row) ',' num2str(new_tile_col) ') Next Tile Value: ' num2str(nav_grid(new_tile_row, new_tile_col)) ' ##'])
+            disp('###---------------------------###')
         end
     end
+end
+
+
+function [] = detect_block(s_cmd, s_rply, rover_radius)
+    [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+    deg = 10;
+    tot_rot = 0;
+    detect_thresh = 1.4;
+    prox_thresh = 5;
+
+    if (u(2) < u(4))
+        while (u(1)/u(6) < detect_thresh) && (tot_rot < 100)
+            cmdstring = [strcat('r1-',num2str(-1*deg)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+            tot_rot = tot_rot + deg;
+            [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+            disp(["tot_rot: " tot_rot]);
+        end
+    else
+        while (u(1)/u(6) < detect_thresh) && (tot_rot < 100)
+            cmdstring = [strcat('r1-',num2str(deg)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+            tot_rot = tot_rot + deg;
+            [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+            disp(["tot_rot: " tot_rot]);
+        end
+    end
+
+    disp("Done Aligning");
+    cmdstring = [strcat('d1-',num2str(u(6)- prox_thresh)) newline];
+    reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+    disp("Move 1");
+    % cmdstring = [strcat('g1-',180) newline];
+    % reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+    cmdstring = [strcat('d1-',num2str(prox_thresh)) newline];
+    reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+    disp("Move Closer to the block by 2 inches");
+    % cmdstring = [strcat('g1-',40) newline];
+    % reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+
+    disp("############## Block Loaded!! ##############");
 end

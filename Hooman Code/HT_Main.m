@@ -26,8 +26,8 @@ global ir_circle
 bot_center = [54,6];  % Robot starting location
 
 bot_rot = 150;            % Robot starting rotation
-block_center = [25,41]; % Block starting location
-blocksize = 0;          % Block side length in inches
+block_center = [12,37]; % Block starting location
+blocksize = 2;          % Block side length in inches
 num_segments = 10;      % Number of movement segments
 strength = [0, 0];	% How intense the random drive bias is, if enabled
 step_time = 0;          % Pause time between the algorithm executing commands
