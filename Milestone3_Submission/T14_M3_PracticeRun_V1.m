@@ -1041,7 +1041,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
     [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
     p = update_localization_map(u, M, p, ultra, k);
-    cmdstring = [strcat('g1-',180) newline];
+    cmdstring = [strcat('g1-',num2str(180)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     speed = 3;
     disp(['Move towards the block, and pick it up. Move: ' speed])
@@ -1050,7 +1050,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
     [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
     p = update_localization_map(u, M, p, ultra, k);
-    cmdstring = [strcat('g1-',40) newline];
+    cmdstring = [strcat('g1-',num2str(40)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     
     cmdstring = [strcat('r1-',num2str(-1*tot_rot)) newline];
@@ -1074,13 +1074,13 @@ end
 
 function deliver_block_and_close_gate(s_cmd, s_rply)
     disp("Unloading block!");
-    cmdstring = [strcat('g1-',180) newline];
+    cmdstring = [strcat('g1-',num2str(180)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     speed = 6;
     disp('Moving rover back 6 inches to close gate')
     cmdstring = [strcat('a1-',num2str(speed)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     disp('Close gripper gate')
-    cmdstring = [strcat('g1-',40) newline];
+    cmdstring = [strcat('g1-',num2str(40)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
 end
