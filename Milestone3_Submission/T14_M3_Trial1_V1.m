@@ -127,7 +127,7 @@ drop_off_4_nav = [10   9   8   7  inf  5 inf 3;
 heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radius, u_loc);
 [heading, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rply, heading, u, p, k, M, ultra, rover_radius, rover_dist_thresh, ultrasonic_margin);
 [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
-[p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+[p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
 p = update_localization_map(u, M, p, ultra, k);
 [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
 disp(['Rover has determined it is in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
@@ -138,14 +138,14 @@ disp("Rover is now driving to the loading zone")
 lz = 1;
 [heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply, heading, loading_zone_nav, loc_x, loc_y, u_loc, rover_radius, M, p, ultra, k, ultrasonic_margin, drop_off_id, lz);
 [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
-[p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+[p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
 p = update_localization_map(u, M, p, ultra, k);
 [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
 disp(['Rover has arrived at the loading zone, in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
 
 % Find and load the block
 disp('Rover is now searching for the block')
-[heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_rply, rover_radius, u_loc, rover_dist_thresh, p, k, M, ultra, heading);
+[heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_rply, rover_radius, u_loc, rover_dist_thresh, p, k, M, ultra, heading, ultrasonic_margin);
 disp('Block found and loaded!')
 
 % Drive the Rover to Delivery point
@@ -163,13 +163,13 @@ end
 
 %% Exit Sequence
 [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
-[p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+[p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
 p = update_localization_map(u, M, p, ultra, k);
 [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
 disp(['Rover has arrived at the drop off zone with ID: ' num2str(drop_off_id) ', in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
 
 % Unload the block
-deliver_block_and_close_gate(s_cmd, s_rply)
+deliver_block_and_close_gate(s_cmd, s_rply, rover_radius, u_loc)
 disp('%%%%%%%%%%%%%%% Block has been delivered! %%%%%%%%%%%%%%%%%%')
 %% Helper functions
 function heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radius, u_loc)
@@ -280,7 +280,7 @@ function [heading, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rpl
         disp('Ultrasonic Measurements')
         disp(u)
         if (rover_straight == 1)
-            [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+            [p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
             p = update_localization_map(u, M, p, ultra, k);
         end
     end
@@ -292,7 +292,7 @@ function [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius,
     % averages them out, and returns them in a 1x6 vector.
     u = [0,0,0,0,0,0];
     u_real = [0,0,0,0,0,0];
-    cmdstring = ['ua' newline];
+    cmdstring = ['ua-5' newline];
     u_real = tcpclient_write(cmdstring, s_cmd, s_rply);
     u1 = u_real(1) - (rover_radius - abs(u_loc(1,1)));
     u2 = u_real(2) - (rover_radius - abs(u_loc(2,2)));
@@ -539,7 +539,13 @@ end
 
 function p = update_localization_map(u, M, p, ultra, k)
     % Determine rover location
-    u_dig = u(1:4) < 12;
+    if (u(4) <= u(5))
+        u_right = u(4);
+    else
+        u_right = u(5);
+    end
+    u_temp = [u(1) u(2) u(3) u_right];
+    u_dig = u_temp < 12;
     disp('u_dig')
     disp(u_dig)
     m_u = sum(u_dig);
@@ -556,7 +562,7 @@ function p = update_localization_map(u, M, p, ultra, k)
     pause(0.5);
 end
 
-function [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k)
+function [p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k)
     % movement update
     p = move(p, M, heading);
     
@@ -565,11 +571,11 @@ function [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k)
 
     % determine index location
     %[loc_y, loc_x] = find(p == max(p(:)));
-    [val, index] = max(p(:));
+    [max_prob, index] = max(p(:));
     [loc_y,loc_x] = ind2sub(size(p),index);
     disp('Possible location of rover (x, y):')
-    disp([loc_x loc_y p(loc_y, loc_x)])
-    if (p(loc_y, loc_x) > 0.09)
+    disp([loc_x loc_y max_prob])
+    if (max_prob >= 0.09)
         localized = 1;
     else
         localized = 0;
@@ -1005,13 +1011,14 @@ function [current_heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply,
     end
 end
 
-function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_rply, rover_radius, u_loc, rover_dist_thresh, p, k, M, ultra, heading)
+function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_rply, rover_radius, u_loc, rover_dist_thresh, p, k, M, ultra, heading, ultrasonic_margin)
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
     deg = 10;
     tot_rot = 0;
     detect_thresh = 1.4;
     prox_thresh = 6.5;
     found_block = 0;
+    init_heading = heading;
     if (u(2) < u(4))
         while (found_block == 0)
             rot = -1*deg;
@@ -1020,12 +1027,12 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             tot_rot = tot_rot + rot;
             heading = heading + rot;
             [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+            disp('Ultrasonic Sensor')
+            disp(u)
             disp(["tot_rot: " tot_rot]);
             if (u(1)/u(6) > detect_thresh)
                 found_block = 1;
-            elseif (abs(tot_rot) >= 100)
-                cmdstring = [strcat('a1-',num2str(1)) newline];
-                reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+                disp("Found block!");
             end
         end
     else
@@ -1036,41 +1043,55 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             tot_rot = tot_rot + rot;
             heading = heading + rot;
             [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+            disp('Ultrasonic Sensor')
+            disp(u)
             disp(["tot_rot: " tot_rot]);
             if (u(1)/u(6) > detect_thresh)
                 found_block = 1;
-            elseif (abs(tot_rot) < 100)
-                cmdstring = [strcat('a1-',num2str(1)) newline];
-                reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+                disp("Found block!");
             end                
         end
     end
     
-    disp("Found block!");
     speed = u(6) - prox_thresh;
     speed_dir = speed / abs(speed);
-    disp(['Giving gripper enough space to open, moving: ' speed])
+    disp(['Giving gripper enough space to open, moving: ' num2str(speed) ' inches'])
     cmdstring = [strcat('d1-',num2str(speed)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+    disp('Ultrasonic Sensor')
+    disp(u)
     [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, speed_dir*heading, k);
     p = update_localization_map(u, M, p, ultra, k);
     cmdstring = [strcat('g1-',num2str(180)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     speed = 3;
-    disp(['Move towards the block, and pick it up. Move: ' speed])
+    disp(['Move towards the block, and pick it up. Move: ' num2str(speed) ' inches'])
     cmdstring = [strcat('d1-',num2str(prox_thresh)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
-    [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+    disp('Ultrasonic Sensor')
+    disp(u)
+    [p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
     p = update_localization_map(u, M, p, ultra, k);
     cmdstring = [strcat('g1-',num2str(40)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     
+    % center rover
     cmdstring = [strcat('r1-',num2str(-1*tot_rot)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
     heading = heading - tot_rot;
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+    rover_centered = 0;
+    unique_loc = 0;
+    first_unique_loc = 0;
+    while (rover_centered == 0)
+        rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc, first_unique_loc, heading);
+        [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+        [p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
+        p = update_localization_map(u, M, p, ultra, k);
+    end
+    
     while (u(1) > rover_dist_thresh*1.25)
         speed = u(1) / 2;
         if (speed > 3)
@@ -1078,19 +1099,45 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
         end
         cmdstring = [strcat('d1-',num2str(speed)) newline];
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-        [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
-        [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, heading, k);
+       [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+        [p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
         p = update_localization_map(u, M, p, ultra, k);
     end
-    
     disp("############## Block Loaded!! ##############");
 end
 
-function deliver_block_and_close_gate(s_cmd, s_rply)
+function deliver_block_and_close_gate(s_cmd, s_rply, rover_radius, u_loc)
+    disp("Make sure rover is safe distance from walls before unloading")
+    [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+    gripper_close_thresh = 6.5;
+    if (u(1) <= gripper_close_thresh)
+        while (u(1) <= gripper_close_thresh)
+            speed = (gripper_close_thresh - u(1));
+            if (speed > 3)
+                speed = 3;
+            end
+            disp(['Rover reverse ' num2str(speed) ' inches'])
+            cmdstring = [strcat('a1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+            [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+        end
+    else
+        while (u(1) > gripper_close_thresh)
+            speed = (u(1) - gripper_close_thresh);
+            if (speed > 3)
+                speed = 3;
+            end
+            disp(['Rover move forward ' num2str(speed) ' inches'])
+            cmdstring = [strcat('d1-',num2str(speed)) newline];
+            reply = tcpclient_write(cmdstring, s_cmd, s_rply);
+            [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+        end
+    end
+        
     disp("Unloading block!");
     cmdstring = [strcat('g1-',num2str(180)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
-    speed = 6;
+    speed = 6.5;
     disp('Moving rover back 6 inches to close gate')
     cmdstring = [strcat('a1-',num2str(speed)) newline];
     reply = tcpclient_write(cmdstring, s_cmd, s_rply);
