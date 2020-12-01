@@ -23,10 +23,10 @@ global ir_circle
 
 %% User-editable variables and flags
 % Constants
-bot_center = [54,6];  % Robot starting location
+bot_center = [42,6];  % Robot starting location
 
-bot_rot = 150;            % Robot starting rotation
-block_center = [12,37]; % Block starting location
+bot_rot = 180;            % Robot starting rotation
+block_center = [14,34]; % Block starting location
 blocksize = 2;          % Block side length in inches
 num_segments = 10;      % Number of movement segments
 strength = [0, 0];	% How intense the random drive bias is, if enabled
