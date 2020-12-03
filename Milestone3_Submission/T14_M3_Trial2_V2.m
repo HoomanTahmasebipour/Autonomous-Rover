@@ -199,7 +199,7 @@ function heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radi
 
     comp = tcpclient_write(['c1' newline], s_cmd, s_rply);
     disp(comp)
-    if (0)%sim == 1)
+    if (sim == 1)
         if comp < 45 && comp > -45
             heading = 0;
         elseif comp < 135 && comp > 45
