@@ -50,7 +50,7 @@ stepcount = 0;
 
 rover_radius = 4;
 rover_dist_thresh = 2;
-ultrasonic_margin = 0.18;
+ultrasonic_margin = 0.3;
 
 %% Localization - create world and initialize probability
 %provide measurements and movements
@@ -264,6 +264,10 @@ function [heading, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rpl
 
         if (rover_straight == 1 && center_attempts < 2)
             rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc, first_unique_loc, heading);
+            if (first_unique_loc == 1)
+                rover_centered = 0;
+                unique_loc = 0;
+            end
             if (rover_centered == 0)
                 center_attempts = center_attempts + 1;
             else
@@ -354,7 +358,7 @@ function rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rove
     centered_dist_from_wall_min = centered_dist_from_wall - centered_dist_from_wall * ultrasonic_margin;
     centered_dist_from_wall_max = centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
         
-    if (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max)))
+    if (u(1) < centered_dist_from_wall_max || (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max))))
         rover_centered = 1;
         disp('rover_centered')
     elseif (unique_loc == 0 && (u_left < centered_dist_from_wall_min || (u_right < u_left && u_right > centered_dist_from_wall_max)))
@@ -723,11 +727,8 @@ function [new_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_g
     end
 end
 
-function center_rover_before_turn(u, loc_x, loc_y, s_cmd, s_rply, heading)
-    speed = 3;
-    if (u(1) >= 3)
-        speed = 2;
-    end
+function center_rover_before_turn(loc_x, loc_y, s_cmd, s_rply, heading)
+    speed = 1.5;
     if (loc_x <= 4 && loc_x >= 1)
         if (loc_x == 4 && heading == 180)
             cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -827,7 +828,12 @@ function center_rover_before_turn(u, loc_x, loc_y, s_cmd, s_rply, heading)
 end
 
 function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_heading, loc_x, loc_y, dropoff_id, tile_x, tile_y, lz)
-    if (dropoff_id == 1)
+    if (lz == 1)
+        dest_x1 = 3;
+        dest_y1 = 1;
+        dest_x2 = 1;
+        dest_y2 = 3;
+    elseif (dropoff_id == 1)
         dest_x = 3;
         dest_y = 3;
     elseif (dropoff_id == 2)
@@ -848,6 +854,7 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
         end
         if (lz == 0 && (tile_x <= dest_x + 1 && tile_x >= dest_x - 1 && tile_y <= dest_y + 1 && tile_y >= dest_y - 1))
             speed = 3;
+        elseif (lz == 1 && (tile_x <= dest_x + 1 && tile_x >= dest_x - 1 && tile_y <= dest_y + 1 && tile_y >= dest_y - 1))
         end
         % Move rover forward one step
         cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -864,7 +871,7 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
         if (lz == 0 && (tile_x <= dest_x + 1 && tile_x >= dest_x - 1 && tile_y <= dest_y + 1 && tile_y >= dest_y - 1))
             speed = 3;
         end
-        center_rover_before_turn(u, loc_x, loc_y, s_cmd, s_rply, heading)
+        center_rover_before_turn(loc_x, loc_y, s_cmd, s_rply, heading)
         % Rotate rover 90 CW and move forward one step
         cmdstring = [strcat('r1-',num2str(90)) newline];
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
@@ -887,7 +894,7 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
         if (lz == 0 && (tile_x <= dest_x + 1 && tile_x >= dest_x - 1 && tile_y <= dest_y + 1 && tile_y >= dest_y - 1))
             speed = 3;
         end
-        center_rover_before_turn(u, loc_x, loc_y, s_cmd, s_rply, heading)
+        center_rover_before_turn(loc_x, loc_y, s_cmd, s_rply, heading)
         % Rotate rover 90 CCW and move forward one step
         cmdstring = [strcat('r1-',num2str(-90)) newline];
         reply = tcpclient_write(cmdstring, s_cmd, s_rply);
@@ -938,19 +945,7 @@ function [current_heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply,
     
     while (tile_val > 0)
         disp(['########################## Step Count: ' num2str(k) ' ##########################'])
-                
-        if (straighten_attempts < 5 && old_heading ~= current_heading)
-            rover_straight = straighten_rover(u, s_cmd, s_rply, unique_loc);
-            if (rover_straight == 0)
-                straighten_attempts = straighten_attempts + 1;
-            else
-                straighten_attempts = 0;
-            end
-        else
-            straighten_attempts = 0;
-            rover_straight = 1;
-        end
-
+        
         unique_loc = 0;
         if (u_real(1) > 10 && u_real(2) > 10 && u_real(3) > 10 && (u_real(4) > 10 || u_real(5) > 10))
             unique_loc = 1;
@@ -961,7 +956,25 @@ function [current_heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply,
             end
             [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, current_heading, k);
             p = update_localization_map(u, M, p, ultra, k);
-            disp('unique_loc')
+            [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
+            tile_val = nav_grid(tile_row, tile_col);
+            [desired_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_grid, tile_row, tile_col);
+            disp('### In Unique Location ###')
+            disp(['## Current Tile Location: (' num2str(tile_row) ',' num2str(tile_col) ') Current Tile Value: ' num2str(tile_val) '##'])
+            disp(['## Next Tile Location: (' num2str(new_tile_row) ',' num2str(new_tile_col) ') Next Tile Value: ' num2str(nav_grid(new_tile_row, new_tile_col)) ' ##'])
+            disp('###---------------------------###')
+        end
+        
+        if (unique_loc == 0 && straighten_attempts < 5 && old_heading ~= current_heading)
+            rover_straight = straighten_rover(u, s_cmd, s_rply, unique_loc);
+            if (rover_straight == 0)
+                straighten_attempts = straighten_attempts + 1;
+            else
+                straighten_attempts = 0;
+            end
+        else
+            straighten_attempts = 0;
+            rover_straight = 1;
         end
 
         if (rover_straight == 1 && center_attempts < 2)
@@ -1006,7 +1019,8 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
     deg = 10;
     tot_rot = 0;
-    detect_thresh = 1.4;
+    detect_thresh_max = 2;
+    detect_thresh_min = 1.4;
     prox_thresh = 6.5;
     found_block = 0;
     init_heading = heading;
@@ -1039,7 +1053,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             disp('Ultrasonic Sensor')
             disp(u)
             disp(["tot_rot: " tot_rot]);
-            if (u(1)/u(6) > detect_thresh)
+            if (u(1)/u(6) > detect_thresh_min && u(1)/u(6) < detect_thresh_max)
                 found_block = 1;
                 disp("Found block!");
             end
@@ -1055,7 +1069,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             disp('Ultrasonic Sensor')
             disp(u)
             disp(["tot_rot: " tot_rot]);
-            if (u(1)/u(6) > detect_thresh)
+            if (u(1)/u(6) > detect_thresh_min && u(1)/u(6) < detect_thresh_max)
                 found_block = 1;
                 disp("Found block!");
             end                

@@ -50,7 +50,7 @@ stepcount = 0;
 
 rover_radius = 4;
 rover_dist_thresh = 2;
-ultrasonic_margin = 0.18;
+ultrasonic_margin = 0.3;
 
 %% Localization - create world and initialize probability
 %provide measurements and movements
@@ -104,22 +104,22 @@ loading_zone_nav = [0  0   1  2  inf  6 inf 8;
                     2  3   4  5   6   7 inf 9];
 
 drop_off_1_nav = [6  7   8  9  inf  7 inf 9; 
-                  5  6  inf 8   7   6  7  8; 
+                  5 inf inf 8   7   6  7  8; 
                   4 inf  0 inf inf  5 inf 9; 
                   3  2   1  2   3   4 inf 10];
                 
 drop_off_2_nav = [7  6   5  4  inf  0 inf 4; 
-                  8  7  inf 3   2   1  2  3; 
+                  8 inf inf 3   2   1  2  3; 
                   9 inf  7 inf inf  2 inf 4; 
                   8  7   6  5   4   3 inf 5];
                 
 drop_off_3_nav = [9   8   7   6  inf  4 inf 0; 
-                  10  9  inf  5   4   3  2  1; 
+                  10 inf  inf  5   4   3  2  1; 
                   11 inf  9  inf inf  4 inf 2; 
                   10  9   8   7   6   5 inf 3];
                 
 drop_off_4_nav = [10   9   8   7  inf  5 inf 3; 
-                  11  10  inf  6   5   4  3  2; 
+                  11 inf  inf  6   5   4  3  2; 
                   12 inf  10  inf inf  5 inf 1; 
                   11  10   9   8   7   6 inf 0];
 
@@ -146,7 +146,12 @@ disp(['Rover has arrived at the loading zone, in tile: (' num2str(tile_row) ', '
 % Find and load the block
 disp('Rover is now searching for the block')
 [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_rply, rover_radius, u_loc, rover_dist_thresh, p, k, M, ultra, heading, ultrasonic_margin);
+[u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
+[p,k,loc_y,loc_x, localized, max_prob] = update_rover_location(p, M, heading, k);
+p = update_localization_map(u, M, p, ultra, k);
+[tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
 disp('Block found and loaded!')
+disp(['Rover is currently in tile: (' num2str(tile_row) ', ' num2str(tile_col) ')'])
 
 % Drive the Rover to Delivery point
 lz = 0;
@@ -194,7 +199,7 @@ function heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radi
 
     comp = tcpclient_write(['c1' newline], s_cmd, s_rply);
     disp(comp)
-    if (sim == 1)
+    if (0)%sim == 1)
         if comp < 45 && comp > -45
             heading = 0;
         elseif comp < 135 && comp > 45
@@ -264,6 +269,10 @@ function [heading, p, k, M, ultra] = ultrasonic_localization(u_loc, s_cmd, s_rpl
 
         if (rover_straight == 1 && center_attempts < 2)
             rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rover_radius, unique_loc, first_unique_loc, heading);
+            if (first_unique_loc == 1)
+                rover_centered = 0;
+                unique_loc = 0;
+            end
             if (rover_centered == 0)
                 center_attempts = center_attempts + 1;
             else
@@ -354,7 +363,7 @@ function rover_centered = center_rover(u, s_cmd, s_rply, ultrasonic_margin, rove
     centered_dist_from_wall_min = centered_dist_from_wall - centered_dist_from_wall * ultrasonic_margin;
     centered_dist_from_wall_max = centered_dist_from_wall + centered_dist_from_wall * ultrasonic_margin;
         
-    if (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max)))
+    if (u(1) < centered_dist_from_wall_max || (unique_loc == 0 && ((u_left > centered_dist_from_wall_min && u_left < centered_dist_from_wall_max) || (u_right > centered_dist_from_wall_min && u_right < centered_dist_from_wall_max))))
         rover_centered = 1;
         disp('rover_centered')
     elseif (unique_loc == 0 && (u_left < centered_dist_from_wall_min || (u_right < u_left && u_right > centered_dist_from_wall_max)))
@@ -723,11 +732,8 @@ function [new_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_g
     end
 end
 
-function center_rover_before_turn(u, loc_x, loc_y, s_cmd, s_rply, heading)
-    speed = 3;
-    if (u(1) >= 3)
-        speed = 2;
-        en
+function center_rover_before_turn(loc_x, loc_y, s_cmd, s_rply, heading)
+    speed = 1.5;
     if (loc_x <= 4 && loc_x >= 1)
         if (loc_x == 4 && heading == 180)
             cmdstring = [strcat('d1-',num2str(speed)) newline];
@@ -824,10 +830,24 @@ function center_rover_before_turn(u, loc_x, loc_y, s_cmd, s_rply, heading)
             reply = tcpclient_write(cmdstring, s_cmd, s_rply);
         end
     end
+    
+    % Check if rover is in drop-off area, make sure centered
+    
 end
 
 function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_heading, loc_x, loc_y, dropoff_id, tile_x, tile_y, lz)
-    if (dropoff_id == 1)
+    dest_x1 = -1;
+    dest_y1 = -1;
+    dest_x2 = -1;
+    dest_y2 = -1;
+    dest_x = -1;
+    dest_y = -1;
+    if (lz == 1)
+        dest_x1 = 3;
+        dest_y1 = 1;
+        dest_x2 = 1;
+        dest_y2 = 3;
+    elseif (dropoff_id == 1)
         dest_x = 3;
         dest_y = 3;
     elseif (dropoff_id == 2)
@@ -847,6 +867,8 @@ function new_heading = drive_to_new_heading(u, s_cmd, s_rply, heading, new_headi
             speed = 6;
         end
         if (lz == 0 && (tile_x <= dest_x + 1 && tile_x >= dest_x - 1 && tile_y <= dest_y + 1 && tile_y >= dest_y - 1))
+            speed = 3;
+        elseif (lz == 1 && (tile_x <= dest_x1 + 1 && tile_x >= dest_x1 - 1 && tile_y <= dest_y1 + 1 && tile_y >= dest_y1 - 1) || (tile_x <= dest_x2 + 1 && tile_x >= dest_x2 - 1 && tile_y <= dest_y2 + 1 && tile_y >= dest_y2 - 1))
             speed = 3;
         end
         % Move rover forward one step
@@ -938,19 +960,7 @@ function [current_heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply,
     
     while (tile_val > 0)
         disp(['########################## Step Count: ' num2str(k) ' ##########################'])
-                
-        if (straighten_attempts < 5 && old_heading ~= current_heading)
-            rover_straight = straighten_rover(u, s_cmd, s_rply, unique_loc);
-            if (rover_straight == 0)
-                straighten_attempts = straighten_attempts + 1;
-            else
-                straighten_attempts = 0;
-            end
-        else
-            straighten_attempts = 0;
-            rover_straight = 1;
-        end
-
+        
         unique_loc = 0;
         if (u_real(1) > 10 && u_real(2) > 10 && u_real(3) > 10 && (u_real(4) > 10 || u_real(5) > 10))
             unique_loc = 1;
@@ -961,7 +971,25 @@ function [current_heading, p, k, M, ultra] = drive_to_destination(s_cmd, s_rply,
             end
             [p,k,loc_y,loc_x, localized] = update_rover_location(p, M, current_heading, k);
             p = update_localization_map(u, M, p, ultra, k);
-            disp('unique_loc')
+            [tile_row, tile_col] = determine_rover_tile_loc(loc_x, loc_y);
+            tile_val = nav_grid(tile_row, tile_col);
+            [desired_heading, new_tile_row, new_tile_col] = determine_new_heading(nav_grid, tile_row, tile_col);
+            disp('### In Unique Location ###')
+            disp(['## Current Tile Location: (' num2str(tile_row) ',' num2str(tile_col) ') Current Tile Value: ' num2str(tile_val) '##'])
+            disp(['## Next Tile Location: (' num2str(new_tile_row) ',' num2str(new_tile_col) ') Next Tile Value: ' num2str(nav_grid(new_tile_row, new_tile_col)) ' ##'])
+            disp('###---------------------------###')
+        end
+        
+        if (unique_loc == 0 && straighten_attempts < 5 && old_heading ~= current_heading)
+            rover_straight = straighten_rover(u, s_cmd, s_rply, unique_loc);
+            if (rover_straight == 0)
+                straighten_attempts = straighten_attempts + 1;
+            else
+                straighten_attempts = 0;
+            end
+        else
+            straighten_attempts = 0;
+            rover_straight = 1;
         end
 
         if (rover_straight == 1 && center_attempts < 2)
@@ -1006,7 +1034,8 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
     deg = 10;
     tot_rot = 0;
-    detect_thresh = 1.4;
+    detect_thresh_max = 2.1;
+    detect_thresh_min = 1.4;
     prox_thresh = 6.5;
     found_block = 0;
     init_heading = heading;
@@ -1039,7 +1068,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             disp('Ultrasonic Sensor')
             disp(u)
             disp(["tot_rot: " tot_rot]);
-            if (u(1)/u(6) > detect_thresh)
+            if (u(1)/u(6) > detect_thresh_min && u(1)/u(6) < detect_thresh_max && (abs(tot_rot) > 70 || abs(tot_rot) < 40))
                 found_block = 1;
                 disp("Found block!");
             end
@@ -1055,7 +1084,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             disp('Ultrasonic Sensor')
             disp(u)
             disp(["tot_rot: " tot_rot]);
-            if (u(1)/u(6) > detect_thresh)
+            if (u(1)/u(6) > detect_thresh_min && u(1)/u(6) < detect_thresh_max && (abs(tot_rot) > 70 || abs(tot_rot) < 40))
                 found_block = 1;
                 disp("Found block!");
             end                

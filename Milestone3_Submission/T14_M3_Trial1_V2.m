@@ -194,7 +194,7 @@ function heading = straighten_and_find_heading(u, sim, s_cmd, s_rply, rover_radi
 
     comp = tcpclient_write(['c1' newline], s_cmd, s_rply);
     disp(comp)
-    if (sim == 1)
+    if (0)%sim == 1)
         if comp < 45 && comp > -45
             heading = 0;
         elseif comp < 135 && comp > 45
@@ -1015,7 +1015,8 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
     [u, u_real] = take_ultrasonic_measurements(s_cmd, s_rply, rover_radius, u_loc);
     deg = 10;
     tot_rot = 0;
-    detect_thresh = 1.4;
+    detect_thresh_max = 2;
+    detect_thresh_min = 1.4;
     prox_thresh = 6.5;
     found_block = 0;
     init_heading = heading;
@@ -1048,7 +1049,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             disp('Ultrasonic Sensor')
             disp(u)
             disp(["tot_rot: " tot_rot]);
-            if (u(1)/u(6) > detect_thresh)
+            if (u(1)/u(6) > detect_thresh_min && u(1)/u(6) < detect_thresh_max)
                 found_block = 1;
                 disp("Found block!");
             end
@@ -1064,7 +1065,7 @@ function [heading, p, k, M, ultra, loc_x, loc_y] = find_and_load_block(s_cmd, s_
             disp('Ultrasonic Sensor')
             disp(u)
             disp(["tot_rot: " tot_rot]);
-            if (u(1)/u(6) > detect_thresh)
+            if (u(1)/u(6) > detect_thresh_min && u(1)/u(6) < detect_thresh_max)
                 found_block = 1;
                 disp("Found block!");
             end                
